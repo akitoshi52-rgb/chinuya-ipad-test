@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-<title>ちぬや発注アシスト Ver.7.3 Webテスト</title>
+<title>ちぬや発注アシスト Ver.7.3.1 Webテスト</title>
 <style>
   :root{
     --paper:#FAF7F1;
@@ -1176,8 +1176,19 @@ function generateMail(){
   // メール本文はこの時点のselectedOperatorから毎回組み立てる。
   const operatorName = selectedOperator;
 
+  // 担当者に応じて署名を自動切替。安藤は代表者用の詳細署名、
+  // その他スタッフは会社共通情報＋登録した担当者名を使用する。
+  function buildSignature(name){
+    const n=String(name||'').trim();
+    if(n==='安藤' || n==='安藤彰敏' || n==='安藤 彰敏'){
+      return `〒769-1101\n香川県三豊市詫間町詫間32\nハローランチかがわ\n有限会社三豊給食センター\n代表取締役　安藤彰敏\n090-3183-0246\nakitoshi52@gmail.com`;
+    }
+    return `〒769-1101\n香川県三豊市詫間町詫間32\nハローランチかがわ\n有限会社三豊給食センター\n担当　${n}\nE-mail：hello.lunch.kagawa.3104@gmail.com`;
+  }
+  const signature = buildSignature(operatorName);
+
   planBodyEl.innerHTML = bodyHtml;
-  const mail = `元木様\n\nいつも大変お世話になっております。\n下記商品につきまして、購入を希望しております。\n同一商品に複数の在庫がある場合は、管理日付の近い在庫から記載しております。\n\n${productMailBlocks.join('\n\n')}\n\nお手数をおかけいたしますが、ご確認のほどよろしくお願いいたします。\n\n有限会社三豊給食センター\n${operatorName}`;
+  const mail = `元木様\n\nいつも大変お世話になっております。\n下記商品につきまして、購入を希望しております。\n同一商品に複数の在庫がある場合は、管理日付の近い在庫から記載しております。\n\n${productMailBlocks.join('\n\n')}\n\nお手数をおかけいたしますが、ご確認のほどよろしくお願いいたします。\n\n${signature}`;
   mailBodyEl.value = mail;
   mailOperatorDisplay.textContent = operatorName;
   const subject='わけあり・ブロークン商品 購入希望のお願い';
