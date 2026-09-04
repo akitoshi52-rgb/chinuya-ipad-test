@@ -1,1 +1,1248 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ちぬや iPadテスト</title><style>body{font-family:-apple-system,sans-serif;background:#f6f4ef;margin:0;padding:18px;color:#222}.card,#status,#total{background:white;border:1px solid #ddd;border-radius:14px;padding:16px;margin:12px 0}button{font-size:20px;padding:8px 18px;background:#225c49;color:white;border:0;border-radius:10px}.q{font-size:20px;font-weight:bold;margin:0 14px}</style></head><body><h2>ちぬや発注アシスト</h2><p>iPad Safari動作確認専用・ダミーデータ</p><div id="status">JavaScript確認中…</div><div id="list"></div><div id="total">選択合計：0ケース</div><script>(function(){var a=[["TEST001","テスト用 コロッケ60",5],["TEST002","テスト用 白身フライ40",3],["TEST003","テスト用 串カツ40",4]],q={};var l=document.getElementById("list");a.forEach(function(x){q[x[0]]=0;var d=document.createElement("div");d.className="card";d.innerHTML="<b>"+x[1]+"</b><br>商品コード "+x[0]+" ／ 在庫 "+x[2]+"ケース<br><br><button data-c='"+x[0]+"' data-d='-1'>－</button><span class='q' id='q_"+x[0]+"'>0</span><button data-c='"+x[0]+"' data-d='1'>＋</button>";l.appendChild(d)});function u(){var t=0;a.forEach(function(x){t+=q[x[0]];document.getElementById("q_"+x[0]).textContent=q[x[0]]});document.getElementById("total").textContent="選択合計："+t+"ケース"}l.onclick=function(e){if(e.target.tagName!="BUTTON")return;var c=e.target.dataset.c,d=Number(e.target.dataset.d),x=a.filter(function(z){return z[0]==c})[0];q[c]=Math.max(0,Math.min(x[2],q[c]+d));u()};document.getElementById("status").textContent="✓ JavaScriptが正常に動いています"})();</script></body></html>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>ちぬや発注アシスト Ver.7.3 Webテスト</title>
+<style>
+  :root{
+    --paper:#FAF7F1;
+    --surface:#FFFFFF;
+    --ink:#22302A;
+    --ink-soft:#5C6B63;
+    --line:#E4DFD2;
+    --accent:#2F6F52;
+    --accent-soft:#E4EFE8;
+    --accent-deep:#1F4E39;
+    --warn:#C1712F;
+    --warn-soft:#F6E7D8;
+    --danger:#B34848;
+    --danger-soft:#F5E1E1;
+    --radius:14px;
+    --shadow: 0 1px 2px rgba(34,48,42,0.06), 0 6px 20px rgba(34,48,42,0.05);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding-bottom:90px; /* room for cart bar */
+  }
+  .wrap{ max-width:1680px; margin:0 auto; padding:0 18px; }
+
+  header.top{ padding:18px 18px 10px; max-width:1680px; margin:0 auto; position:relative; }
+  .eyebrow{ font-size:11.5px; letter-spacing:.14em; color:var(--accent-deep); font-weight:700; text-transform:uppercase; }
+  h1{ font-size:21px; margin:4px 0 2px; font-weight:800; letter-spacing:-0.01em; }
+  .sub{ font-size:12.5px; color:var(--ink-soft); line-height:1.5; }
+
+  /* sticky controls */
+  .controls{
+    position:sticky; top:0; background:var(--paper);
+    padding:10px 0 8px; z-index:20;
+  }
+  input[type=text]{
+    width:100%; padding:13px 15px; font-size:16px; border-radius:12px;
+    border:1.5px solid var(--line); background:var(--surface); color:var(--ink);
+    outline:none; font-family:inherit;
+  }
+  input[type=text]:focus{ border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+
+  .filter-row{
+    display:flex; gap:6px; margin-top:9px; overflow-x:auto;
+    padding-bottom:2px;
+  }
+  .chip{
+    flex-shrink:0; padding:7px 13px; border-radius:999px; font-size:12.5px; font-weight:700;
+    background:var(--surface); border:1.5px solid var(--line); color:var(--ink-soft);
+    cursor:pointer; white-space:nowrap;
+  }
+  .chip.active{ background:var(--accent); border-color:var(--accent); color:#fff; }
+
+  .sort-row{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-top:10px; font-size:11.5px; color:var(--ink-soft);
+  }
+  .sort-btns{ display:flex; gap:6px; }
+  .sort-btn{
+    padding:5px 10px; border-radius:8px; font-size:11.5px; font-weight:700;
+    background:transparent; border:1px solid var(--line); color:var(--ink-soft); cursor:pointer;
+  }
+  .sort-btn.active{ background:var(--accent-soft); border-color:var(--accent); color:var(--accent-deep); }
+
+  /* catalog */
+  .catalog{
+    margin-top:12px;
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:14px;
+  }
+  .count-line{ font-size:11.5px; color:var(--ink-soft); margin:2px 2px 8px; }
+
+  .prod-card{
+    position:relative;
+    background:var(--surface); border:2px solid var(--line); border-radius:16px;
+    padding:16px 16px 16px 18px; min-height:244px; display:flex; flex-direction:column; align-items:stretch; gap:9px;
+    transition:border-color .12s, background .12s, box-shadow .12s;
+    overflow:hidden;
+  }
+  .prod-card::before{
+    content:''; position:absolute; left:0; top:0; bottom:0; width:5px;
+    background:#B9C9BE;
+  }
+  .prod-card.fresh-r::before{ background:var(--danger); }
+  .prod-card.fresh-a::before{ background:var(--warn); }
+  .prod-card.fresh-r{ background:linear-gradient(180deg,var(--danger-soft) 0%, var(--surface) 62px); }
+  .prod-card.fresh-a{ background:linear-gradient(180deg,var(--warn-soft) 0%, var(--surface) 62px); }
+  .prod-card.selected{ border-color:var(--accent); box-shadow:0 0 0 2.5px var(--accent-soft) inset; }
+  .prod-card.selected::before{ background:var(--accent); width:6px; }
+  .prod-card.no-stock-hint{ }
+
+  .selected-check{
+    position:absolute; right:10px; top:10px; width:24px; height:24px; border-radius:50%;
+    background:var(--accent); color:#fff; font-size:14px; font-weight:900;
+    display:none; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(31,78,57,.35);
+  }
+  .prod-card.selected .selected-check{ display:flex; }
+
+  .prod-main{ flex:0 0 auto; min-width:0; padding-right:26px; }
+  .prod-top{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+  .prod-name{ font-size:16.5px; font-weight:800; line-height:1.35; letter-spacing:-0.01em; }
+  .kubun-tag{
+    font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:5px; flex-shrink:0;
+    background:#EFEAD9; color:var(--ink-soft);
+  }
+  .remainder-only-badge{
+    font-size:11px; font-weight:900; padding:3px 8px; border-radius:5px; flex-shrink:0;
+    background:var(--accent-deep); color:#fff;
+  }
+  .prod-meta{ font-size:12.5px; color:var(--ink-soft); margin-top:4px; }
+  .prod-expiry{ display:flex; align-items:center; gap:6px; margin-top:6px; }
+  .fresh-dot{ width:9px;height:9px;border-radius:50%; flex-shrink:0; }
+  .fresh-dot.g{background:#3E8763;} .fresh-dot.a{background:#D69A3E;} .fresh-dot.r{background:#C1522F;}
+  .prod-expiry-text{ font-size:13px; color:var(--ink-soft); }
+  .prod-expiry-text b{ color:var(--ink); }
+
+  .stock-block{
+    margin-top:2px; padding:8px 10px; border-radius:10px; background:rgba(34,48,42,0.035);
+    font-size:13.5px; color:var(--ink-soft); display:flex; align-items:center; justify-content:space-between;
+  }
+  .stock-block .stock-label{ font-weight:700; }
+  .stock-block .stock-value{ font-weight:800; color:var(--ink); }
+  .stock-block .stock-value.zero-case{ color:var(--ink-soft); font-weight:700; }
+
+  .order-block{ margin-top:auto; display:flex; flex-direction:column; gap:7px; }
+  .order-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .order-row .order-label{ font-size:12.5px; font-weight:800; color:var(--ink-soft); width:36px; flex-shrink:0; }
+  .no-stock-note{ font-size:10.5px; color:var(--ink-soft); }
+
+  .stepper{ display:flex; align-items:center; gap:0; border:1.5px solid var(--line); border-radius:10px; overflow:hidden; background:var(--surface); }
+  .stepper.disabled{ opacity:.45; }
+  .step-btn{
+    width:40px; height:40px; border:none; background:var(--accent-soft); color:var(--accent-deep);
+    font-size:21px; font-weight:900; cursor:pointer; font-family:inherit; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; user-select:none;
+  }
+  .step-btn:active{ background:var(--accent); color:#fff; }
+  .step-btn:disabled{ background:#EFEAD9; color:#B9B9AC; cursor:not-allowed; }
+  .step-input{
+    width:54px; min-width:0; height:40px; border:none; border-left:1.5px solid var(--line); border-right:1.5px solid var(--line);
+    background:var(--surface); color:var(--ink); font-size:17px; font-weight:900;
+    text-align:center; outline:none; font-family:inherit; -moz-appearance:textfield;
+  }
+  .step-input::-webkit-outer-spin-button, .step-input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  .step-input:focus{ background:var(--accent-soft); }
+  .stock-over{font-size:10.5px;color:var(--danger);margin-top:2px;font-weight:700;}
+  .piece-info{font-size:11px;color:var(--accent-deep);font-weight:800;margin-top:2px;}
+  .piece-note{font-size:10px;color:var(--ink-soft);margin-top:2px;}
+  @media (max-width:1350px){.catalog{grid-template-columns:repeat(3,minmax(0,1fr));}}
+  @media (max-width:980px){.catalog{grid-template-columns:repeat(2,minmax(0,1fr));}}
+  @media (max-width:560px){.catalog{grid-template-columns:1fr;}}
+
+
+  .no-results{ padding:24px; text-align:center; color:var(--ink-soft); font-size:13px; }
+
+  /* cart bar */
+  .cart-bar{
+    position:fixed; left:0; right:0; bottom:0; z-index:40;
+    background:var(--accent-deep); color:#fff;
+    padding:12px 16px; display:none;
+    align-items:center; justify-content:space-between; gap:12px;
+    box-shadow:0 -6px 20px rgba(0,0,0,0.12);
+  }
+  .cart-bar.show{ display:flex; }
+  .cart-info{ font-size:12.5px; line-height:1.4; }
+  .cart-info b{ font-size:14.5px; }
+  .cart-btn{
+    background:#fff; color:var(--accent-deep); border:none; border-radius:10px;
+    padding:11px 18px; font-size:13.5px; font-weight:800; cursor:pointer; font-family:inherit;
+    white-space:nowrap;
+  }
+  .cart-btn:active{ transform:scale(0.97); }
+
+  /* results panel */
+  .plan{ margin-top:22px; display:none; }
+  .plan.show{ display:block; }
+  .plan-header{ display:flex; align-items:center; gap:8px; margin:0 2px 10px; }
+  .plan-header .dot{ width:8px;height:8px;border-radius:50%; background:var(--accent); }
+  .plan-title{ font-size:13px; font-weight:700; color:var(--accent-deep); }
+
+  .lot-group{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:14px; margin-bottom:10px; }
+  .lot-group-name{ font-size:13.5px; font-weight:700; }
+  .lot-group-meta{ font-size:11px; color:var(--ink-soft); margin-top:1px; }
+  .lot-row{ display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--line); }
+  .lot-info{ flex:1; min-width:0; }
+  .lot-date{ font-size:12.5px; font-weight:700; }
+  .lot-wh{ font-size:11px; color:var(--ink-soft); }
+  .lot-qty{ font-size:13px; font-weight:800; color:var(--accent-deep); white-space:nowrap; }
+  .lot-remain{ font-size:10.5px; color:var(--ink-soft); white-space:nowrap; }
+  .short-warn{ margin-top:8px; font-size:12px; color:var(--danger); background:var(--danger-soft); padding:8px 10px; border-radius:8px; }
+
+  .mail-card{ background:var(--accent-deep); color:#F3F0E7; border-radius:var(--radius); padding:16px; margin-top:16px; }
+  .mail-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .mail-head span{ font-size:12.5px; font-weight:700; letter-spacing:.04em; }
+  .copy-btn{
+    background:rgba(255,255,255,0.14); border:1px solid rgba(255,255,255,0.28); color:#F3F0E7;
+    font-size:12px; font-weight:700; padding:7px 12px; border-radius:8px; cursor:pointer; font-family:inherit;
+  }
+  .copy-btn:active{ background:rgba(255,255,255,0.26); }
+  .copy-btn.copied{ background:var(--accent); border-color:var(--accent); }
+  textarea{
+    width:100%; min-height:220px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.18);
+    border-radius:10px; color:#F3F0E7; font-size:12.5px; line-height:1.7; padding:12px; font-family:inherit; resize:vertical;
+  }
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:10.5px; color:var(--ink-soft); margin:10px 2px 0; }
+  .legend span{ display:flex; align-items:center; gap:5px; }
+  .legend .dot{ width:8px;height:8px;border-radius:50%; }
+
+  .history-btn{
+    position:absolute; right:18px; top:20px; border:1.5px solid var(--accent);
+    background:var(--surface); color:var(--accent-deep); border-radius:999px;
+    padding:8px 13px; font-size:12px; font-weight:800; cursor:pointer; font-family:inherit;
+  }
+  .source-line{font-size:11px;color:var(--ink-soft);margin-top:4px;}
+  .modal-bg{position:fixed;inset:0;background:rgba(20,30,25,.38);z-index:80;display:none;align-items:center;justify-content:center;padding:18px;}
+  .modal-bg.show{display:flex;}
+  .modal{width:min(720px,96vw);max-height:82vh;background:var(--paper);border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,.24);overflow:hidden;}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--surface);}
+  .modal-title{font-size:15px;font-weight:800;}
+  .modal-close{border:0;background:transparent;font-size:24px;cursor:pointer;color:var(--ink-soft);}
+  .hist-list{padding:12px 14px;overflow:auto;max-height:68vh;}
+  .hist-card{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-bottom:8px;}
+  .hist-top{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--ink-soft);}
+  .hist-kind{font-size:12.5px;font-weight:800;color:var(--accent-deep);}
+  .hist-body{font-size:12px;line-height:1.5;margin-top:5px;white-space:pre-wrap;}
+  .operator-row{display:flex;align-items:center;gap:8px;margin:12px 0 8px;}
+  .operator-row label{font-size:11.5px;font-weight:700;color:var(--ink-soft);}
+  .operator-row input{max-width:220px;padding:8px 10px;font-size:13px;}
+  .mail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .mail-action{
+    border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;
+    padding:9px 12px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;text-decoration:none;font-family:inherit;
+  }
+  .mail-action.primary{background:#fff;color:var(--accent-deep);border-color:#fff;}
+  .mail-action.sent{background:#D9F0E2;color:var(--accent-deep);border-color:#D9F0E2;}
+
+
+  .update-row{
+    display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:9px;
+  }
+  .update-btn{
+    border:1.5px solid var(--accent); background:var(--accent); color:#fff;
+    border-radius:10px; padding:10px 14px; font-size:12.5px; font-weight:800;
+    cursor:pointer; font-family:inherit;
+  }
+  .update-btn.secondary{background:var(--surface);color:var(--accent-deep);}
+  .update-status{font-size:11.5px;color:var(--ink-soft);line-height:1.4;}
+  .update-status.ok{color:var(--accent-deep);font-weight:700;}
+  .update-status.err{color:var(--danger);font-weight:700;}
+
+#autoStatus{margin-left:auto;padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:var(--surface)} #autoStatus.ok{color:var(--accent-deep);font-weight:800} #autoStatus.warn{color:#8a5a00;font-weight:800} #autoStatus.err{color:var(--danger);font-weight:800}
+
+  /* confirm modal (Ver.7) */
+  .confirm-modal{ width:min(640px,96vw); }
+  .confirm-summary{ font-size:12.5px; color:var(--ink-soft); padding:12px 16px 0; }
+  .confirm-list{ padding:10px 16px; overflow:auto; max-height:44vh; }
+  .confirm-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--surface); border:1.5px solid var(--line); border-radius:11px;
+    padding:10px 12px; margin-bottom:8px;
+  }
+  .confirm-row-main{ min-width:0; }
+  .confirm-row-name{ font-size:13px; font-weight:700; line-height:1.3; }
+  .confirm-row-meta{ font-size:11px; color:var(--ink-soft); margin-top:2px; }
+  .confirm-row-qty{ font-size:12.5px; font-weight:800; color:var(--accent-deep); white-space:nowrap; }
+  .confirm-row-remove{
+    border:none; background:var(--danger-soft); color:var(--danger); width:26px; height:26px; border-radius:50%;
+    font-size:14px; font-weight:900; cursor:pointer; flex-shrink:0; font-family:inherit;
+  }
+  .confirm-empty{ padding:20px; text-align:center; color:var(--ink-soft); font-size:13px; }
+
+  .operator-section{ padding:6px 16px 14px; border-top:1px solid var(--line); margin-top:4px; }
+  .operator-title{ font-size:12px; font-weight:800; color:var(--ink-soft); margin:12px 0 8px; }
+  .operator-chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  .operator-chip{
+    padding:9px 16px; border-radius:999px; font-size:13px; font-weight:700;
+    background:var(--surface); border:1.5px solid var(--line); color:var(--ink);
+    cursor:pointer; font-family:inherit;
+  }
+  .operator-chip.active{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .operator-chip.add-new{ background:var(--accent-soft); border-color:var(--accent); color:var(--accent-deep); }
+
+  .confirm-footer{ padding:12px 16px 16px; border-top:1px solid var(--line); }
+  .confirm-build-btn{
+    width:100%; border:none; border-radius:13px; background:var(--accent); color:#fff;
+    font-size:15.5px; font-weight:800; padding:15px 12px; cursor:pointer; font-family:inherit;
+    box-shadow:0 4px 14px rgba(31,78,57,.28);
+  }
+  .confirm-build-btn:disabled{ background:#C9C4B4; box-shadow:none; cursor:not-allowed; }
+  .confirm-build-hint{ font-size:11px; color:var(--ink-soft); margin-top:8px; text-align:center; }
+
+  .operator-display-line{ font-size:12px; color:#D9EBDF; margin-top:2px; }
+  .operator-display-line b{ color:#fff; }
+
+  /* Ver.7.1 見やすさ仕上げ */
+  .prod-card.selected{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(47,111,82,.18) inset, 0 8px 22px rgba(31,78,57,.10);
+    background:linear-gradient(180deg,#EEF7F1 0%, var(--surface) 82px);
+  }
+  .selected-check{
+    width:28px;height:28px;font-size:16px;
+  }
+  .stock-block{
+    min-height:44px;
+  }
+  .stock-block.partial-only{
+    background:#FFF3DF;
+    border:1px solid #E7C58C;
+  }
+  .stock-block.partial-only .stock-value{
+    color:var(--accent-deep);
+  }
+  .no-stock-note{
+    font-size:11.5px;
+    font-weight:700;
+    color:var(--accent-deep);
+    background:var(--accent-soft);
+    border-radius:8px;
+    padding:5px 7px;
+  }
+  .cart-bar{padding:14px 18px;}
+  .cart-info{font-size:13.5px;}
+  .cart-info b{font-size:16px;}
+  .cart-btn{font-size:14.5px;padding:12px 20px;}
+
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3 · WEB TEST</div>
+  <h1>ちぬや発注アシスト</h1>
+  <div class="sub">下へスクロールして商品を選び、最後に「選んだ商品を確認」でまとめて確認してから発注メールを作ります。管理日付が近い在庫から自動で割り当てます。</div>
+  <div style="font-size:11.5px;color:var(--accent-deep);font-weight:700;margin-top:5px;">在庫を確認 → ケース・端数を入力 → 最後に担当者を選んでメール作成</div>
+  <div class="source-line" id="sourceLine">iPad Safari実機テスト用・ダミーデータ 3商品</div>
+  <button class="history-btn" id="historyBtn">やり取り履歴</button>
+</header>
+
+<div class="wrap">
+
+  <div class="controls">
+    <div class="update-row">
+      <button class="update-btn" id="updateExcelBtn" type="button">在庫Excelを更新</button>
+      <button class="update-btn secondary" id="restoreDefaultBtn" type="button">在庫をクリア</button>
+      <input type="file" id="excelFiles" accept=".xlsx" multiple hidden>
+      <span class="update-status" id="updateStatus">わけあり・ブロークンのExcelを2ファイル同時に選択してください</span><span class="update-status" id="autoStatus">Web版：Excel手動更新</span>
+    </div>
+    <input type="text" id="searchInput" placeholder="商品名・商品コードで絞り込み（任意）" autocomplete="off">
+    <div class="filter-row">
+      <div class="chip active" data-kubun="all">すべて</div>
+      <div class="chip" data-kubun="わけあり">わけあり</div>
+      <div class="chip" data-kubun="ブロークン">ブロークン</div>
+      <div class="chip" data-selected-only="1" id="selectedChip">選択中のみ</div>
+    </div>
+    <div class="sort-row">
+      <span id="countLine"></span>
+      <div class="sort-btns">
+        <button class="sort-btn active" data-sort="name">名前順</button>
+        <button class="sort-btn" data-sort="expiry">期限が近い順</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="catalog" id="catalog"></div>
+
+  <div class="plan" id="plan">
+    <div class="plan-header"><div class="dot"></div><div class="plan-title">FEFO自動割当</div></div>
+    <div id="planBody"></div>
+
+    <div class="legend">
+      <span><span class="dot" style="background:#3E8763"></span>60日以上先</span>
+      <span><span class="dot" style="background:#D69A3E"></span>30〜60日</span>
+      <span><span class="dot" style="background:#C1522F"></span>30日以内</span>
+    </div>
+
+    <div class="mail-card">
+      <div class="mail-head">
+        <span>元木様への依頼メール</span>
+        <button class="copy-btn" id="copyBtn">コピー</button>
+      </div>
+      <textarea id="mailBody" readonly></textarea>
+      <div class="operator-display-line">操作担当：<b id="mailOperatorDisplay">未設定</b></div>
+      <div class="mail-actions">
+        <a class="mail-action primary" id="mailtoBtn" href="#">メールソフトで開く（送信元確認）</a>
+        <button class="mail-action" id="markSentBtn" type="button">メール送信後、送信済みにする</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="cart-bar" id="cartBar">
+  <div class="cart-info"><b id="cartCount">0</b>商品選択・<span id="cartQty"></span></div>
+  <button class="cart-btn" id="buildBtn">選んだ商品を確認 →</button>
+</div>
+
+<div class="modal-bg" id="historyModal" aria-hidden="true">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">やり取り履歴</div>
+      <button class="modal-close" id="historyClose" aria-label="閉じる">×</button>
+    </div>
+    <div class="hist-list" id="historyList"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="confirmModal" aria-hidden="true">
+  <div class="modal confirm-modal">
+    <div class="modal-head">
+      <div class="modal-title">選んだ商品を確認</div>
+      <button class="modal-close" id="confirmClose" aria-label="閉じる">×</button>
+    </div>
+    <div class="confirm-summary" id="confirmSummary"></div>
+    <div class="confirm-list" id="confirmList"></div>
+    <div class="operator-section">
+      <div class="operator-title">操作担当を選んでください</div>
+      <div class="operator-chips" id="operatorChips"></div>
+    </div>
+    <div class="confirm-footer">
+      <button class="confirm-build-btn" id="confirmBuildBtn" disabled>この内容で発注メールを作る</button>
+      <div class="confirm-build-hint" id="confirmBuildHint">操作担当を選ぶとボタンを押せます</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_LOTS = [{"code": "TEST001", "name": "テスト用 コロッケ60", "spec": "65gx100/2", "kubun": "わけあり", "date": "2026-09-10", "warehouse": "テスト倉庫A", "stock": 5, "remainder": 1}, {"code": "TEST002", "name": "テスト用 白身フライ40", "spec": "40gx100/3", "kubun": "わけあり", "date": "2026-09-12", "warehouse": "テスト倉庫B", "stock": 3, "remainder": 2}, {"code": "TEST003", "name": "テスト用 メンチ", "spec": "600g(30個以上)x10/2", "kubun": "ブロークン", "date": "2026-09-15", "warehouse": "テストﾌﾞﾛｰｸﾝ倉庫", "stock": 4, "remainder": 1}];
+
+let LOTS = DEFAULT_LOTS.map(x=>({...x}));
+let products = {};
+let productList = [];
+
+function rebuildProducts(){
+  // 発注単位は「商品コード × 区分 × 商品名 × 規格」。
+  // ケース0でも端数があれば商品を残す。区分をまたいで混在させない。
+  products = {};
+  LOTS.forEach(l=>{
+    const key = [l.code,l.kubun,l.name,l.spec].join('__');
+    if(!products[key]){
+      products[key] = {key, code:l.code, name:l.name, spec:l.spec, kubun:l.kubun, lots:[], totalStock:0, totalRemainder:0};
+    }
+    products[key].lots.push(l);
+    products[key].totalStock += Number(l.stock)||0;
+    products[key].totalRemainder += Number(l.remainder)||0;
+  });
+  Object.values(products).forEach(p=>{
+    p.lots.sort((a,b)=> new Date(a.date) - new Date(b.date));
+    p.nearestDate = p.lots[0]?.date || '';
+  });
+  productList = Object.values(products);
+}
+rebuildProducts();
+
+
+const order = new Map(); // product key -> {cases, partials}
+let kubunFilter = 'all';
+let selectedOnly = false;
+let sortMode = 'name';
+let searchQ = '';
+
+const searchInput = document.getElementById('searchInput');
+const catalogEl = document.getElementById('catalog');
+const countLineEl = document.getElementById('countLine');
+const cartBar = document.getElementById('cartBar');
+const cartCount = document.getElementById('cartCount');
+const cartQty = document.getElementById('cartQty');
+const buildBtn = document.getElementById('buildBtn');
+const planEl = document.getElementById('plan');
+const planBodyEl = document.getElementById('planBody');
+const mailBodyEl = document.getElementById('mailBody');
+const copyBtn = document.getElementById('copyBtn');
+const selectedChip = document.getElementById('selectedChip');
+const confirmModal = document.getElementById('confirmModal');
+const confirmSummary = document.getElementById('confirmSummary');
+const confirmList = document.getElementById('confirmList');
+const operatorChipsEl = document.getElementById('operatorChips');
+const confirmBuildBtn = document.getElementById('confirmBuildBtn');
+const confirmBuildHint = document.getElementById('confirmBuildHint');
+const mailOperatorDisplay = document.getElementById('mailOperatorDisplay');
+
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmtDate(d){
+  const dt = new Date(d);
+  return `${dt.getFullYear()}/${String(dt.getMonth()+1).padStart(2,'0')}/${String(dt.getDate()).padStart(2,'0')}`;
+}
+function freshClass(dateStr){
+  const days = (new Date(dateStr) - new Date()) / 86400000;
+  if(days <= 30) return 'r';
+  if(days <= 60) return 'a';
+  return 'g';
+}
+
+
+// ---- 規格から商品個数を換算（Ver.7.3） ----
+// 例: 65gx100/2 => 1ケース200個・端数1=100個
+//     (80gx10)x3/4 => 1ケース120個・端数1=30個
+//     600g(30個以上)x10/2 => 最低600個/ケース・端数1=最低300個
+function parsePieceSpec(spec){
+  const raw=String(spec||'').replace(/[×Ｘ]/g,'x').replace(/\s+/g,'');
+  if(!raw) return null;
+  const slash=raw.match(/\/(\d+)\s*$/);
+  const outer=slash?Number(slash[1]):1;
+  const base=slash?raw.slice(0,slash.index):raw;
+  let minimum=false, unit='個', basePerInner=null;
+  const min=base.match(/\((\d+)(個|本|枚)?以上\)/);
+  if(min){ basePerInner=Number(min[1]); unit=min[2]||'個'; minimum=true; }
+  if(basePerInner==null){
+    // 重量表記の直後に来る数量を「最小包装内の商品数」とする。
+    // 65gx100 ->100、(80gx10)x3 -> 10*3、85gx20x3 ->20*3
+    const cleaned=base.replace(/[\[\]【】()]/g,'');
+    const m=cleaned.match(/(?:\d+(?:\.\d+)?(?:g|kg|Ｇ|ＫＧ))x(.+)$/i);
+    if(!m) return null;
+    const factors=(m[1].match(/\d+(?:\.\d+)?/g)||[]).map(Number).filter(Number.isFinite);
+    if(!factors.length) return null;
+    basePerInner=factors.reduce((a,b)=>a*b,1);
+  }else{
+    // 「30個以上)x10」など、括弧後の倍率を加える
+    const after=base.slice(base.indexOf(')')+1);
+    const factors=(after.match(/x(\d+(?:\.\d+)?)/g)||[]).map(x=>Number(x.slice(1))).filter(Number.isFinite);
+    if(factors.length) basePerInner*=factors.reduce((a,b)=>a*b,1);
+  }
+  if(!Number.isFinite(basePerInner)||basePerInner<=0||!Number.isFinite(outer)||outer<=0) return null;
+  return {perPartial:basePerInner, perCase:basePerInner*outer, minimum, unit};
+}
+function pieceText(spec,cases,partials){
+  const p=parsePieceSpec(spec); if(!p) return {text:'個数換算：規格から自動計算できません',count:null};
+  const count=(Number(cases)||0)*p.perCase+(Number(partials)||0)*p.perPartial;
+  const prefix=p.minimum?'最低':'';
+  return {text:`商品個数：${prefix}${count}${p.unit}`,count, minimum:p.minimum, unit:p.unit};
+}
+function perCasePieceText(spec){
+  const p=parsePieceSpec(spec); if(!p) return '1ケース当たり個数：換算不可';
+  return `1ケース当たり：${p.minimum?'最低':''}${p.perCase}${p.unit} ／ 端数1：${p.minimum?'最低':''}${p.perPartial}${p.unit}`;
+}
+
+
+
+const INVENTORY_KEY='chinuya_inventory_lots_v63';
+const INVENTORY_META_KEY='chinuya_inventory_meta_v63';
+const excelInput=document.getElementById('excelFiles');
+const updateBtn=document.getElementById('updateExcelBtn');
+const restoreBtn=document.getElementById('restoreDefaultBtn');
+const updateStatus=document.getElementById('updateStatus');
+const sourceLine=document.getElementById('sourceLine');
+
+function escText(s){return String(s??'').trim();}
+function excelSerialToISO(v){
+  if(v===null || v===undefined || v==='') return '';
+  const raw=String(v).trim();
+  // 8桁のYYYYMMDDが数値セルで来ても、Excelシリアル値と誤認しない。
+  const ymd=raw.match(/^(20\d{2})(\d{2})(\d{2})$/);
+  if(ymd) return `${ymd[1]}-${ymd[2]}-${ymd[3]}`;
+  if(typeof v==='number' || (/^\d+(\.\d+)?$/.test(raw) && Number(v)>20000)){
+    const n=Number(v);
+    const ms=Date.UTC(1899,11,30) + Math.floor(n)*86400000;
+    const d=new Date(ms);
+    return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0,10);
+  }
+  const t=raw.replace(/\./g,'/').replace(/-/g,'/');
+  const m=t.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+  if(m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  return '';
+}
+function isValidISODate(s){
+  if(!/^20\d{2}-\d{2}-\d{2}$/.test(String(s||''))) return false;
+  const d=new Date(s+'T00:00:00');
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0,10)===s;
+}
+function colLettersToIndex(ref){
+  const m=String(ref).match(/^([A-Z]+)/i); if(!m) return 0;
+  let n=0; for(const ch of m[1].toUpperCase()) n=n*26+(ch.charCodeAt(0)-64);
+  return n-1;
+}
+async function inflateRaw(bytes){
+  if(typeof DecompressionStream==='undefined') throw new Error('このブラウザではExcel展開機能が使えません。EdgeまたはChromeで開いてください。');
+  const ds=new DecompressionStream('deflate-raw');
+  const blob=new Blob([bytes]);
+  return new Uint8Array(await new Response(blob.stream().pipeThrough(ds)).arrayBuffer());
+}
+function u16(dv,o){return dv.getUint16(o,true)}
+function u32(dv,o){return dv.getUint32(o,true)}
+async function unzipXlsx(arrayBuffer){
+  const u8=new Uint8Array(arrayBuffer), dv=new DataView(arrayBuffer);
+  let eocd=-1;
+  for(let i=u8.length-22;i>=Math.max(0,u8.length-65557);i--){
+    if(u32(dv,i)===0x06054b50){eocd=i;break;}
+  }
+  if(eocd<0) throw new Error('Excelファイルの形式を確認できませんでした。');
+  const entries=u16(dv,eocd+10), cdOffset=u32(dv,eocd+16);
+  let p=cdOffset; const out={}; const dec=new TextDecoder('utf-8');
+  for(let k=0;k<entries;k++){
+    if(u32(dv,p)!==0x02014b50) throw new Error('Excel内部データを読み取れませんでした。');
+    const method=u16(dv,p+10), compSize=u32(dv,p+20);
+    const fnLen=u16(dv,p+28), exLen=u16(dv,p+30), cmLen=u16(dv,p+32), localOff=u32(dv,p+42);
+    const name=dec.decode(u8.slice(p+46,p+46+fnLen));
+    if(u32(dv,localOff)!==0x04034b50) throw new Error('Excel内部データが壊れています。');
+    const lfn=u16(dv,localOff+26), lex=u16(dv,localOff+28);
+    const dataOff=localOff+30+lfn+lex, comp=u8.slice(dataOff,dataOff+compSize);
+    let raw;
+    if(method===0) raw=comp;
+    else if(method===8) raw=await inflateRaw(comp);
+    else { p += 46+fnLen+exLen+cmLen; continue; }
+    out[name]=raw;
+    p += 46+fnLen+exLen+cmLen;
+  }
+  return out;
+}
+function xmlText(bytes){return new TextDecoder('utf-8').decode(bytes)}
+function parseSharedStrings(zip){
+  const b=zip['xl/sharedStrings.xml']; if(!b) return [];
+  const doc=new DOMParser().parseFromString(xmlText(b),'application/xml');
+  return [...doc.getElementsByTagName('si')].map(si=>[...si.getElementsByTagName('t')].map(t=>t.textContent||'').join(''));
+}
+function parseSheetRows(bytes, shared){
+  const doc=new DOMParser().parseFromString(xmlText(bytes),'application/xml');
+  const rows=[];
+  for(const row of [...doc.getElementsByTagName('row')]){
+    const arr=[];
+    for(const c of [...row.getElementsByTagName('c')]){
+      const idx=colLettersToIndex(c.getAttribute('r')||'A1');
+      const t=c.getAttribute('t')||'';
+      let val='';
+      if(t==='inlineStr'){
+        val=[...c.getElementsByTagName('t')].map(x=>x.textContent||'').join('');
+      } else {
+        const v=c.getElementsByTagName('v')[0]?.textContent ?? '';
+        val=t==='s' ? (shared[Number(v)] ?? '') : v;
+      }
+      arr[idx]=val;
+    }
+    rows.push(arr);
+  }
+  return rows;
+}
+function normalizeHeader(s){return String(s??'').replace(/[\s　\r\n]/g,'').toLowerCase();}
+function findHeaderIndex(headers, candidates){
+  const hs=headers.map(normalizeHeader);
+  for(const cand of candidates){
+    const c=normalizeHeader(cand);
+    let i=hs.findIndex(x=>x===c);
+    if(i>=0) return i;
+  }
+  for(const cand of candidates){
+    const c=normalizeHeader(cand);
+    let i=hs.findIndex(x=>x.includes(c));
+    if(i>=0) return i;
+  }
+  return -1;
+}
+function detectKubun(filename, warehouse=''){
+  const f=String(filename||'');
+  const w=String(warehouse||'');
+  // ファイル名だけでなく、倉庫名も使って区分判定する。
+  // これにより、ブラウザ側でファイル名判定が不安定な場合や、
+  // 既に保存済みの在庫データでも『ﾌﾞﾛｰｸﾝ』倉庫を正しく復元できる。
+  return /ブロークン|ﾌﾞﾛｰｸﾝ|broken/i.test(f) || /ブロークン|ﾌﾞﾛｰｸﾝ|broken/i.test(w)
+    ? 'ブロークン' : 'わけあり';
+}
+function rowsToLots(rows, filename){
+  let h=-1;
+  for(let i=0;i<Math.min(rows.length,40);i++){
+    const norm=rows[i].map(normalizeHeader);
+    if(norm.some(x=>x.includes('商品コード')) && norm.some(x=>x.includes('現在在庫数'))){h=i;break;}
+  }
+  if(h<0) return [];
+  const headers=rows[h];
+  const ci=findHeaderIndex(headers,['商品コード']);
+  const ni=findHeaderIndex(headers,['商品名１','商品名1','商品名']);
+  const si=findHeaderIndex(headers,['商品名２','商品名2','規格']);
+  const qi=findHeaderIndex(headers,['現在在庫数','在庫数']);
+  const ri=findHeaderIndex(headers,['現在在庫端数','在庫端数','端数']);
+  const di=findHeaderIndex(headers,['管理日付','賞味期限']);
+  const wi=findHeaderIndex(headers,['倉庫名','保管倉庫','倉庫']);
+  if(ci<0 || ni<0 || qi<0 || ri<0) return [];
+  const out=[];
+  for(let r=h+1;r<rows.length;r++){
+    const row=rows[r]||[];
+    const rawCode=escText(row[ci]).replace(/\.0$/,'');
+    const code=rawCode ? rawCode.padStart(7,'0') : '';
+    const name=escText(row[ni]);
+    const stock=Math.floor(Number(String(row[qi]??'').replace(/,/g,''))||0);
+    const remainder=Math.floor(Number(String(row[ri]??'').replace(/,/g,''))||0);
+    if(!code || !name || (stock<=0 && remainder<=0)) continue;
+    const warehouse=wi>=0?escText(row[wi]):'';
+    out.push({
+      code, name, spec:si>=0?escText(row[si]):'',
+      kubun:detectKubun(filename, warehouse),
+      date:di>=0?excelSerialToISO(row[di]):'', warehouse, stock, remainder
+    });
+  }
+  return out;
+}
+async function readXlsxFile(file){
+  const zip=await unzipXlsx(await file.arrayBuffer());
+  const shared=parseSharedStrings(zip);
+  const sheetNames=Object.keys(zip).filter(k=>/^xl\/worksheets\/sheet\d+\.xml$/i.test(k)).sort();
+  let lots=[];
+  for(const s of sheetNames) lots=lots.concat(rowsToLots(parseSheetRows(zip[s],shared),file.name));
+  return lots;
+}
+function applyInventory(lots, meta, save=true){
+  // 過去に誤って『わけあり』として保存されたブロークン在庫も、倉庫名から自動補正する。
+  LOTS=lots.map(l=>({...l, kubun:detectKubun('', l.warehouse) === 'ブロークン' ? 'ブロークン' : (l.kubun||'わけあり')}));
+  order.clear();
+  planEl.classList.remove('show');
+  rebuildProducts();
+  renderCatalog();
+  updateCartBar();
+  const total=LOTS.reduce((s,x)=>s+(Number(x.stock)||0),0);
+  const totalRem=LOTS.reduce((s,x)=>s+(Number(x.remainder)||0),0);
+  const files=meta?.files?.join(' / ') || '';
+  const when=meta?.updatedAt ? new Date(meta.updatedAt).toLocaleString('ja-JP') : '';
+  sourceLine.textContent=`在庫基準：${when || '更新データ'} ／ ${LOTS.length}在庫行・${total}ケース・端数${totalRem}${files?' ／ '+files:''}`;
+  const wakeLots=LOTS.filter(x=>x.kubun==='わけあり');
+  const brokenLots=LOTS.filter(x=>x.kubun==='ブロークン');
+  const wakeCases=wakeLots.reduce((s,x)=>s+(Number(x.stock)||0),0);
+  const brokenCases=brokenLots.reduce((s,x)=>s+(Number(x.stock)||0),0);
+  const wakeRem=wakeLots.reduce((s,x)=>s+(Number(x.remainder)||0),0);
+  const brokenRem=brokenLots.reduce((s,x)=>s+(Number(x.remainder)||0),0);
+  updateStatus.textContent=`更新完了：${LOTS.length}在庫行・${total}ケース・端数${totalRem}（わけあり ${wakeLots.length}行/${wakeCases}ケース/端数${wakeRem}、ブロークン ${brokenLots.length}行/${brokenCases}ケース/端数${brokenRem}）`;
+  updateStatus.className='update-status ok';
+  if(save){
+    try{
+      localStorage.setItem(INVENTORY_KEY,JSON.stringify(LOTS));
+      localStorage.setItem(INVENTORY_META_KEY,JSON.stringify(meta||{}));
+    }catch(e){}
+  }
+}
+function loadSavedInventory(){
+  try{
+    const raw=localStorage.getItem(INVENTORY_KEY);
+    if(!raw) return false;
+    const lots=JSON.parse(raw), meta=JSON.parse(localStorage.getItem(INVENTORY_META_KEY)||'{}');
+    if(Array.isArray(lots) && lots.length){applyInventory(lots,meta,false);return true;}
+  }catch(e){}
+  return false;
+}
+updateBtn.addEventListener('click',()=>excelInput.click());
+excelInput.addEventListener('change',async()=>{
+  const files=[...excelInput.files];
+  if(!files.length) return;
+  updateBtn.disabled=true;
+  updateStatus.textContent='Excelを読み込んでいます…';
+  updateStatus.className='update-status';
+  try{
+    // 誤更新防止：毎回「わけあり」「ブロークン」の2ファイルを同時に選ぶ。
+    if(files.length!==2) throw new Error('在庫更新は「わけあり」と「ブロークン」の2ファイルを同時に選んでください。');
+    const names=files.map(f=>String(f.name||''));
+    const hasWake=names.some(n=>/わけあり/i.test(n));
+    const hasBroken=names.some(n=>/ブロークン|ﾌﾞﾛｰｸﾝ|broken/i.test(n));
+    if(!hasWake || !hasBroken) throw new Error('「わけあり」と「ブロークン」の2種類がそろっていません。元木様から届いた2ファイルを選んでください。');
+    if(new Set(names).size!==names.length) throw new Error('同じファイルが重複して選ばれています。');
+    const dateTags=names.map(n=>(n.match(/(\d{6})/)||[])[1]||'');
+    if(!dateTags[0] || !dateTags[1] || dateTags[0]!==dateTags[1]) throw new Error('2ファイルの日付が一致していません。同じ日に元木様から届いた「わけあり」「ブロークン」を選んでください。');
+
+    let all=[];
+    for(const f of files){
+      const lots=await readXlsxFile(f);
+      if(!lots.length) throw new Error(`${f.name} から有効な在庫データを見つけられませんでした。`);
+      all=all.concat(lots);
+    }
+    if(!all.length) throw new Error('在庫データがありません。');
+    const bad=all.find(l=>!l.code || !l.name || !Number.isInteger(Number(l.stock)) || Number(l.stock)<0 || !Number.isInteger(Number(l.remainder)) || Number(l.remainder)<0 || (Number(l.stock)<=0 && Number(l.remainder)<=0) || !isValidISODate(l.date) || !['わけあり','ブロークン'].includes(l.kubun));
+    if(bad) throw new Error(`在庫データに不正な行があります（商品コード ${bad.code||'不明'}）。更新を中止しました。`);
+    if(!all.some(l=>l.kubun==='わけあり') || !all.some(l=>l.kubun==='ブロークン')) throw new Error('区分判定結果に「わけあり」と「ブロークン」の両方がありません。更新を中止しました。');
+
+    const meta={updatedAt:new Date().toISOString(),files:files.map(f=>f.name)};
+    applyInventory(all,meta,true);
+    const total=all.reduce((s,x)=>s+x.stock,0);
+    const totalRem=all.reduce((s,x)=>s+(Number(x.remainder)||0),0);
+    addHist('在庫Excel更新','取込完了',`${files.map(f=>f.name).join(' / ')}\n${all.length}在庫行・${total}ケース・端数${totalRem}`);
+  }catch(err){
+    updateStatus.textContent='取込できません：'+(err?.message||err);
+    updateStatus.className='update-status err';
+  }finally{
+    updateBtn.disabled=false;
+    excelInput.value='';
+  }
+});
+restoreBtn.addEventListener('click',()=>{
+  if(!confirm('この端末に保存されている在庫データをクリアしますか？')) return;
+  try{localStorage.removeItem(INVENTORY_KEY);localStorage.removeItem(INVENTORY_META_KEY);}catch(e){}
+  LOTS=[]; order.clear(); rebuildProducts(); renderCatalog(); updateCartBar(); planEl.classList.remove('show');
+  sourceLine.textContent='iPad Safari実機テスト用・ダミーデータ 3商品';
+  updateStatus.textContent='在庫をクリアしました。最新のExcel 2ファイルを読み込んでください。';
+  updateStatus.className='update-status ok';
+  addHist('在庫データ','クリア','端末内の在庫データをクリア');
+});
+
+const autoStatus=document.getElementById('autoStatus');
+autoStatus.textContent='Web版：Excel手動更新'; autoStatus.className='update-status ok';
+
+const HIST_KEY='chinuya_order_history_v3';
+const OP_KEY='chinuya_operator_v3';
+let currentMailHistoryId=null;
+let memoryHist=[];
+
+function loadHist(){try{const raw=localStorage.getItem(HIST_KEY); return raw?JSON.parse(raw):memoryHist;}catch(e){return memoryHist;}}
+function saveHist(v){memoryHist=v; try{localStorage.setItem(HIST_KEY,JSON.stringify(v));}catch(e){}}
+function addHist(kind,status,summary){
+  const arr=loadHist();
+  const rec={id:'h'+Date.now()+Math.random().toString(36).slice(2,7),ts:new Date().toISOString(),kind,status,summary,operator:selectedOperator||'未入力'};
+  arr.unshift(rec); saveHist(arr); return rec;
+}
+function seedHist(){}
+function renderHist(){
+  const arr=loadHist().sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
+  const el=document.getElementById('historyList');
+  el.innerHTML=arr.length?arr.map(x=>`<div class="hist-card"><div class="hist-top"><span class="hist-kind">${x.kind||'履歴'}${x.status?'・'+x.status:''}</span><span>${new Date(x.ts).toLocaleString('ja-JP')}</span></div><div class="hist-body">担当：${x.operator||'未入力'}\n${x.summary||''}</div></div>`).join(''):'<div class="no-results">履歴はまだありません</div>';
+}
+seedHist();
+
+// ---- 操作担当（登録式）Ver.7 ----
+// 毎回テキスト入力させず、一度登録した担当者を選択式にすることで
+// 「送信直前に名前を書き換え忘れる」問題そのものをなくす。
+const OPERATORS_KEY='chinuya_operators_v7';
+let selectedOperator='';
+function loadOperators(){
+  try{
+    const raw=localStorage.getItem(OPERATORS_KEY);
+    if(raw){ const arr=JSON.parse(raw); if(Array.isArray(arr)&&arr.length) return arr; }
+  }catch(e){}
+  // 旧バージョン（Ver.6.5以前）の単一担当者名があれば引き継ぐ。なければ例として2名を初期登録。
+  let seed=[];
+  try{ const old=(localStorage.getItem(OP_KEY)||'').trim(); if(old) seed=[old]; }catch(e){}
+  if(!seed.length) seed=['山口','安藤'];
+  saveOperators(seed);
+  return seed;
+}
+function saveOperators(arr){ try{localStorage.setItem(OPERATORS_KEY,JSON.stringify(arr));}catch(e){} }
+let operators=loadOperators();
+try{ selectedOperator=localStorage.getItem(OP_KEY+'_selected')||''; }catch(e){}
+if(!operators.includes(selectedOperator)) selectedOperator='';
+
+function renderOperatorChips(){
+  operatorChipsEl.innerHTML = operators.map(name=>
+    `<button type="button" class="operator-chip ${name===selectedOperator?'active':''}" data-op="${escapeHtml(name)}">${escapeHtml(name)}</button>`
+  ).join('') + `<button type="button" class="operator-chip add-new" id="addOperatorBtn">＋ 新しい担当者</button>`;
+  updateConfirmBuildState();
+}
+operatorChipsEl.addEventListener('click', e=>{
+  const addBtn = e.target.closest('#addOperatorBtn');
+  if(addBtn){
+    const name=(prompt('担当者名を登録します（例：山口）')||'').trim();
+    if(!name) return;
+    if(!operators.includes(name)){ operators.push(name); saveOperators(operators); }
+    selectedOperator=name;
+    try{localStorage.setItem(OP_KEY+'_selected',selectedOperator);}catch(e2){}
+    renderOperatorChips();
+    return;
+  }
+  const chip = e.target.closest('.operator-chip[data-op]');
+  if(!chip) return;
+  selectedOperator = chip.dataset.op;
+  try{localStorage.setItem(OP_KEY+'_selected',selectedOperator);}catch(e2){}
+  renderOperatorChips();
+});
+function updateConfirmBuildState(){
+  const hasItems = order.size>0;
+  confirmBuildBtn.disabled = !(hasItems && selectedOperator);
+  confirmBuildHint.textContent = !hasItems ? '商品が選択されていません'
+    : !selectedOperator ? '操作担当を選ぶとボタンを押せます'
+    : `${selectedOperator} として発注メールを作成します`;
+}
+
+// ---- 選んだ商品を確認モーダル Ver.7 ----
+function renderConfirmList(){
+  const keys = Array.from(order.keys());
+  if(keys.length){
+    const totals=keys.reduce((a,key)=>{const q=order.get(key)||{cases:0,partials:0};a.cases+=Number(q.cases)||0;a.partials+=Number(q.partials)||0;const pc=pieceText(products[key]?.spec,q.cases,q.partials);if(pc.count!=null){a.pieces+=pc.count;a.hasPiece=true;}else a.allPiece=false;return a;},{cases:0,partials:0,pieces:0,hasPiece:false,allPiece:true});
+    confirmSummary.textContent=`${keys.length}商品 ／ 合計 ${totals.cases}ケース・端数${totals.partials}` + (totals.hasPiece?` ／ 商品個数 ${totals.allPiece?'':'換算可能分 '}${totals.pieces}個相当`:'');
+  } else confirmSummary.textContent='';
+  if(!keys.length){
+    confirmList.innerHTML = '<div class="confirm-empty">商品が選択されていません。一覧に戻って商品を選んでください。</div>';
+    return;
+  }
+  confirmList.innerHTML = keys.map(key=>{
+    const p = products[key];
+    const q = order.get(key) || {cases:0, partials:0};
+    const qtyLabel = [q.cases>0?`ケース${q.cases}`:'', q.partials>0?`端数${q.partials}`:''].filter(Boolean).join('・');
+    return `
+      <div class="confirm-row" data-code="${key}">
+        <div class="confirm-row-main">
+          <div class="confirm-row-name">${escapeHtml(p.name)}</div>
+          <div class="confirm-row-meta">${escapeHtml(p.spec)} ・ ${escapeHtml(p.kubun)}</div>
+        </div>
+        <div class="confirm-row-qty">${qtyLabel}<br><span style="font-size:10.5px;font-weight:700;">${escapeHtml(pieceText(p.spec,q.cases,q.partials).text)}</span></div>
+        <button type="button" class="confirm-row-remove" data-remove="${key}" title="この商品を削除">×</button>
+      </div>
+    `;
+  }).join('');
+}
+confirmList.addEventListener('click', e=>{
+  const btn = e.target.closest('[data-remove]');
+  if(!btn) return;
+  const key = btn.dataset.remove;
+  order.delete(key);
+  renderConfirmList();
+  updateConfirmBuildState();
+  renderCatalog();
+});
+function openConfirmModal(){
+  if(order.size===0) return;
+  renderConfirmList();
+  renderOperatorChips();
+  confirmModal.classList.add('show');
+}
+function closeConfirmModal(){ confirmModal.classList.remove('show'); }
+document.getElementById('confirmClose').addEventListener('click', closeConfirmModal);
+confirmModal.addEventListener('click', e=>{ if(e.target.id==='confirmModal') closeConfirmModal(); });
+confirmBuildBtn.addEventListener('click', ()=>{
+  if(confirmBuildBtn.disabled) return;
+  generateMail();
+  closeConfirmModal();
+});
+
+document.getElementById('historyBtn').addEventListener('click',()=>{renderHist();document.getElementById('historyModal').classList.add('show');});
+document.getElementById('historyClose').addEventListener('click',()=>document.getElementById('historyModal').classList.remove('show'));
+document.getElementById('historyModal').addEventListener('click',e=>{if(e.target.id==='historyModal')e.currentTarget.classList.remove('show');});
+
+document.querySelectorAll('.chip[data-kubun]').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('.chip[data-kubun]').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    kubunFilter = chip.dataset.kubun;
+    renderCatalog();
+  });
+});
+selectedChip.addEventListener('click', ()=>{
+  selectedOnly = !selectedOnly;
+  selectedChip.classList.toggle('active', selectedOnly);
+  renderCatalog();
+});
+document.querySelectorAll('.sort-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    sortMode = btn.dataset.sort;
+    renderCatalog();
+  });
+});
+searchInput.addEventListener('input', ()=>{
+  searchQ = searchInput.value.trim().toLowerCase();
+  renderCatalog();
+});
+
+function getFiltered(){
+  let list = productList.filter(p=>{
+    if(kubunFilter!=='all' && p.kubun!==kubunFilter) return false;
+    if(selectedOnly && !order.has(p.key)) return false;
+    if(searchQ && !(p.name.toLowerCase().includes(searchQ) || p.code.includes(searchQ))) return false;
+    return true;
+  });
+  if(sortMode==='name'){
+    list.sort((a,b)=>a.name.localeCompare(b.name,'ja'));
+  } else {
+    list.sort((a,b)=> new Date(a.nearestDate) - new Date(b.nearestDate));
+  }
+  return list;
+}
+
+function renderCatalog(){
+  const list = getFiltered();
+  const uniqueCodes=new Set(list.map(p=>p.code)).size;
+  countLineEl.textContent = kubunFilter==='all' && list.length!==uniqueCodes
+    ? `${uniqueCodes}商品コード（区分別 ${list.length}枠）を表示`
+    : `${list.length}品目を表示`;
+  if(list.length===0){
+    catalogEl.innerHTML = '<div class="no-results">該当する商品がありません</div>';
+  } else {
+    catalogEl.innerHTML = list.map(p=>{
+      const ord = order.get(p.key) || {cases:0, partials:0};
+      const selected = ord.cases>0 || ord.partials>0;
+      const fresh = freshClass(p.nearestDate);
+      const remainderOnly = p.totalStock<=0 && p.totalRemainder>0;
+      const casesDisabled = p.totalStock<=0;
+      const partialsDisabled = p.totalRemainder<=0;
+      return `
+        <div class="prod-card fresh-${fresh} ${selected?'selected':''}" data-code="${p.key}">
+          <div class="selected-check">✓</div>
+          <div class="prod-main">
+            <div class="prod-top">
+              <div class="prod-name">${escapeHtml(p.name)}</div>
+              <div class="kubun-tag">${escapeHtml(p.kubun)}</div>
+              ${remainderOnly ? '<div class="remainder-only-badge">端数のみ在庫</div>' : ''}
+            </div>
+            <div class="prod-meta">${escapeHtml(p.spec)} ・ ${escapeHtml(p.code)}</div>
+            <div class="piece-info">${escapeHtml(perCasePieceText(p.spec))}</div>
+            <div class="prod-expiry">
+              <div class="fresh-dot ${fresh}"></div>
+              <div class="prod-expiry-text">最短 <b>${fmtDate(p.nearestDate)}</b>（${p.lots.length}在庫行）</div>
+            </div>
+          </div>
+          <div class="stock-block ${casesDisabled && p.totalRemainder>0?'partial-only':''}">
+            <span class="stock-label">在庫</span>
+            <span class="stock-value ${casesDisabled?'zero-case':''}">ケース ${p.totalStock}／端数 ${p.totalRemainder}</span>
+          </div>
+          <div class="order-block">
+            <div class="order-row">
+              <span class="order-label">発注</span>
+              <span class="order-label" style="width:auto;">ケース</span>
+              <div class="stepper ${casesDisabled?'disabled':''}" data-qty-type="cases" data-qty="${p.key}">
+                <button type="button" class="step-btn" data-step="-1" ${casesDisabled?'disabled':''}>－</button>
+                <input class="step-input" type="number" min="0" max="${p.totalStock}" step="1" inputmode="numeric"
+                       data-qty-type="cases" data-qty="${p.key}" value="${ord.cases || 0}" ${casesDisabled?'disabled':''}>
+                <button type="button" class="step-btn" data-step="1" ${casesDisabled?'disabled':''}>＋</button>
+              </div>
+            </div>
+            ${casesDisabled ? '<div class="no-stock-note">※ケース在庫はありません（端数のみ発注できます）</div>' : ''}
+            <div class="order-row">
+              <span class="order-label" style="width:34px;"></span>
+              <span class="order-label" style="width:auto;">端数</span>
+              <div class="stepper ${partialsDisabled?'disabled':''}" data-qty-type="partials" data-qty="${p.key}">
+                <button type="button" class="step-btn" data-step="-1" ${partialsDisabled?'disabled':''}>－</button>
+                <input class="step-input" type="number" min="0" max="${p.totalRemainder}" step="1" inputmode="numeric"
+                       data-qty-type="partials" data-qty="${p.key}" value="${ord.partials || 0}" ${partialsDisabled?'disabled':''}>
+                <button type="button" class="step-btn" data-step="1" ${partialsDisabled?'disabled':''}>＋</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  updateCartBar();
+}
+
+function setQty(key, type, rawValue){
+  const p = products[key];
+  if(!p) return;
+  const max = type==='partials' ? p.totalRemainder : p.totalStock;
+  let v = parseInt(rawValue || '0', 10);
+  if(!Number.isFinite(v) || v < 0) v = 0;
+  if(v > max) v = max;
+  const cur = order.get(key) || {cases:0, partials:0};
+  const next = {...cur, [type]:v};
+  if(next.cases<=0 && next.partials<=0) order.delete(key); else order.set(key, next);
+  const card = catalogEl.querySelector(`.prod-card[data-code="${CSS.escape(key)}"]`);
+  if(card){
+    card.classList.toggle('selected', next.cases>0 || next.partials>0);
+    const inputEl = card.querySelector(`.step-input[data-qty-type="${type}"]`);
+    if(inputEl) inputEl.value = v;
+  }
+  updateCartBar();
+  planEl.classList.remove('show');
+  return v;
+}
+catalogEl.addEventListener('input', e=>{
+  const inp = e.target.closest('.step-input[data-qty]');
+  if(!inp) return;
+  setQty(inp.dataset.qty, inp.dataset.qtyType, inp.value);
+});
+catalogEl.addEventListener('click', e=>{
+  const btn = e.target.closest('.step-btn[data-step]');
+  if(!btn) return;
+  const wrap = btn.closest('.stepper');
+  const key = wrap.dataset.qty, type = wrap.dataset.qtyType;
+  const inputEl = wrap.querySelector('.step-input');
+  const cur = parseInt(inputEl.value || '0', 10) || 0;
+  const delta = parseInt(btn.dataset.step, 10);
+  setQty(key, type, cur + delta);
+});
+
+
+function updateCartBar(){
+  const codes = Array.from(order.keys());
+  if(codes.length===0){
+    cartBar.classList.remove('show');
+    if(confirmModal.classList.contains('show')) closeConfirmModal();
+    return;
+  }
+  cartBar.classList.add('show');
+  cartCount.textContent = codes.length;
+  const totals = codes.reduce((a,c)=>{
+    const q=order.get(c)||{cases:0,partials:0};
+    a.cases+=Number(q.cases)||0; a.partials+=Number(q.partials)||0;
+    const pc=pieceText(products[c]?.spec,q.cases,q.partials); if(pc.count!=null){a.pieces+=pc.count;a.hasPiece=true;} else a.allPiece=false;
+    return a;
+  },{cases:0,partials:0,pieces:0,hasPiece:false,allPiece:true});
+  cartQty.textContent = `ケース${totals.cases}・端数${totals.partials}` + (totals.hasPiece?`・商品個数${totals.allPiece?'':'換算可能分'}${totals.pieces}個相当`:'');
+  if(confirmModal.classList.contains('show')){ renderConfirmList(); updateConfirmBuildState(); }
+}
+
+buildBtn.addEventListener('click', ()=>{
+  openConfirmModal();
+});
+
+const SENT_TX_KEY='chinuya_sent_transactions_v73';
+let pendingTx=null;
+function loadSentTx(){try{return JSON.parse(localStorage.getItem(SENT_TX_KEY)||'[]')}catch(e){return []}}
+function saveSentTx(v){try{localStorage.setItem(SENT_TX_KEY,JSON.stringify(v))}catch(e){}}
+function inventoryFingerprint(){return LOTS.map((l,i)=>[i,l.code,l.kubun,l.date,l.warehouse,l.stock,l.remainder].join('|')).join('~~');}
+
+function generateMail(){
+  const productMailBlocks = [];
+  let bodyHtml = '';
+  const txAlloc=[];
+  const beforeFingerprint=inventoryFingerprint();
+
+  order.forEach((desired, key)=>{
+    const detailLines = [];
+    const p = products[key];
+    let remainingCases = Number(desired.cases)||0;
+    let remainingPartials = Number(desired.partials)||0;
+    const allocRows = [];
+    p.lots.forEach(lot=>{
+      const takeCases = remainingCases <= 0 ? 0 : Math.min(Number(lot.stock)||0, remainingCases);
+      const takePartials = remainingPartials <= 0 ? 0 : Math.min(Number(lot.remainder)||0, remainingPartials);
+      if(takeCases > 0 || takePartials > 0){
+        const lotIndex=LOTS.indexOf(lot);
+        allocRows.push({...lot, lotIndex, takeCases, takePartials, leftCases:(Number(lot.stock)||0)-takeCases, leftPartials:(Number(lot.remainder)||0)-takePartials});
+        txAlloc.push({lotIndex,code:lot.code,name:lot.name,spec:lot.spec,kubun:lot.kubun,date:lot.date,warehouse:lot.warehouse,takeCases,takePartials});
+        remainingCases -= takeCases;
+        remainingPartials -= takePartials;
+        const hope=[];
+        if(takeCases>0) hope.push(`${takeCases}ケース`);
+        if(takePartials>0) hope.push(`端数${takePartials}`);
+        detailLines.push(`　・管理日付：${fmtDate(lot.date)}　倉庫：${lot.warehouse}　内訳：${hope.join('・')}`);
+      }
+    });
+    const shortCases = remainingCases > 0;
+    const shortPartials = remainingPartials > 0;
+    const desiredLabel=[desired.cases>0?`${desired.cases}ケース`:'',desired.partials>0?`端数${desired.partials}`:''].filter(Boolean).join('・');
+
+    const pc=pieceText(p.spec,desired.cases,desired.partials);
+    const mailHeader = `■ 商品コード：${p.code}　${p.name}
+　規格：${p.spec}　区分：${p.kubun}
+　希望合計：${desiredLabel}
+　${pc.text}`;
+    const shortage=[];
+    if(shortCases) shortage.push(`ケース在庫不足：${remainingCases}ケース`);
+    if(shortPartials) shortage.push(`端数在庫不足：端数${remainingPartials}`);
+    productMailBlocks.push([mailHeader, '　【管理日付・倉庫別内訳】', ...detailLines, ...(shortage.length?['　※'+shortage.join('／')]:[])].join('\n'));
+
+    bodyHtml += `
+      <div class="lot-group">
+        <div class="lot-group-name">${escapeHtml(p.name)}<span style="font-weight:400;color:var(--ink-soft);"> ・ 希望${desiredLabel}</span></div>
+        <div class="lot-group-meta">${escapeHtml(p.spec)} ・ ${escapeHtml(p.code)} ・ ${escapeHtml(p.kubun)} ／ ${escapeHtml(pieceText(p.spec,desired.cases,desired.partials).text)}</div>
+        ${allocRows.map(r=>{
+          const taken=[r.takeCases>0?`${r.takeCases}ケース`:'',r.takePartials>0?`端数${r.takePartials}`:''].filter(Boolean).join('・');
+          const left=[`残${r.leftCases}ケース`,`端数残${r.leftPartials}`].join('・');
+          return `
+          <div class="lot-row">
+            <div class="fresh-dot ${freshClass(r.date)}"></div>
+            <div class="lot-info">
+              <div class="lot-date">${fmtDate(r.date)}</div>
+              <div class="lot-wh">${escapeHtml(r.warehouse)}</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="lot-qty">${taken}</div>
+              <div class="lot-remain">${left}</div>
+            </div>
+          </div>`;
+        }).join('')}
+        ${shortCases ? `<div class="short-warn">ケース在庫不足：${remainingCases}ケース分は手配できません（ケース在庫合計 ${p.totalStock}）</div>` : ''}
+        ${shortPartials ? `<div class="short-warn">端数在庫不足：端数${remainingPartials}分は手配できません（端数在庫合計 ${p.totalRemainder}）</div>` : ''}
+      </div>
+    `;
+  });
+
+  // 操作担当は確認モーダルで選択済み（confirmBuildBtnはselectedOperatorが
+  // 空だと押せないため、ここに来る時点で必ず設定されている）。
+  // 「押し直さないと前の担当者名のまま」という不具合を避けるため、
+  // メール本文はこの時点のselectedOperatorから毎回組み立てる。
+  const operatorName = selectedOperator;
+
+  planBodyEl.innerHTML = bodyHtml;
+  const mail = `元木様\n\nいつも大変お世話になっております。\n下記商品につきまして、購入を希望しております。\n同一商品に複数の在庫がある場合は、管理日付の近い在庫から記載しております。\n\n${productMailBlocks.join('\n\n')}\n\nお手数をおかけいたしますが、ご確認のほどよろしくお願いいたします。\n\n有限会社三豊給食センター\n${operatorName}`;
+  mailBodyEl.value = mail;
+  mailOperatorDisplay.textContent = operatorName;
+  const subject='わけあり・ブロークン商品 購入希望のお願い';
+  document.getElementById('mailtoBtn').href='mailto:k.motoki@chinuya.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(mail);
+  const totals=Array.from(order.values()).reduce((a,q)=>{a.cases+=Number(q.cases)||0;a.partials+=Number(q.partials)||0;return a;},{cases:0,partials:0});
+  const rec=addHist('発注内容作成','未送信',`${order.size}品目・合計${totals.cases}ケース・端数${totals.partials}`);
+  currentMailHistoryId=rec.id;
+  pendingTx={id:'tx'+Date.now()+Math.random().toString(36).slice(2,8),createdAt:new Date().toISOString(),beforeFingerprint,allocations:txAlloc,operator:operatorName,summary:{items:order.size,cases:totals.cases,partials:totals.partials}};
+  const sentBtn=document.getElementById('markSentBtn'); sentBtn.textContent='メール送信後、送信済みにする'; sentBtn.classList.remove('sent'); sentBtn.disabled=false;
+
+  planEl.classList.add('show');
+  planEl.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+copyBtn.addEventListener('click', ()=>{
+  mailBodyEl.select();
+  mailBodyEl.setSelectionRange(0, 999999);
+  try{
+    navigator.clipboard.writeText(mailBodyEl.value).then(()=>{
+      copyBtn.textContent='コピーしました';
+      copyBtn.classList.add('copied');
+      setTimeout(()=>{ copyBtn.textContent='コピー'; copyBtn.classList.remove('copied'); }, 1800);
+    });
+  }catch(e){
+    document.execCommand('copy');
+  }
+});
+
+
+document.getElementById('mailtoBtn').addEventListener('click',e=>{
+  const ok=confirm('送信前確認：この発注メールは hello.lunch.kagawa.3104@gmail.com から送信してください。\n\n送信元が3104 Gmailであることを確認してから続けますか？');
+  if(!ok){ e.preventDefault(); return; }
+  const totals=Array.from(order.values()).reduce((a,q)=>{a.cases+=Number(q.cases)||0;a.partials+=Number(q.partials)||0;return a;},{cases:0,partials:0});
+  addHist('発注メール','メールソフトを開いた',`${order.size}品目・合計${totals.cases}ケース・端数${totals.partials}`);
+});
+document.getElementById('markSentBtn').addEventListener('click',e=>{
+  if(!pendingTx){ alert('先に発注メールを作成してください。'); return; }
+  const sent=loadSentTx();
+  if(sent.includes(pendingTx.id)){ alert('この発注はすでに在庫へ反映済みです。'); return; }
+  if(!confirm('元木様へのメール送信が完了しましたか？\n\n「OK」を押すと、今回の発注分を在庫から差し引きます。')) return;
+  if(inventoryFingerprint()!==pendingTx.beforeFingerprint){ alert('発注メール作成後に在庫が変更されています。二重減算防止のため処理を中止します。もう一度発注内容を作り直してください。'); return; }
+  for(const a of pendingTx.allocations){
+    const lot=LOTS[a.lotIndex];
+    if(!lot || lot.code!==a.code || lot.kubun!==a.kubun || lot.date!==a.date || lot.warehouse!==a.warehouse || (Number(lot.stock)||0)<a.takeCases || (Number(lot.remainder)||0)<a.takePartials){
+      alert('在庫ロットの状態が変わっています。処理を中止しました。'); return;
+    }
+  }
+  for(const a of pendingTx.allocations){
+    LOTS[a.lotIndex].stock=(Number(LOTS[a.lotIndex].stock)||0)-a.takeCases;
+    LOTS[a.lotIndex].remainder=(Number(LOTS[a.lotIndex].remainder)||0)-a.takePartials;
+  }
+  LOTS=LOTS.filter(l=>(Number(l.stock)||0)>0 || (Number(l.remainder)||0)>0);
+  const meta={updatedAt:new Date().toISOString(),files:['発注反映後在庫']};
+  try{localStorage.setItem(INVENTORY_KEY,JSON.stringify(LOTS));localStorage.setItem(INVENTORY_META_KEY,JSON.stringify(meta));}catch(err){}
+  sent.push(pendingTx.id); saveSentTx(sent);
+  const summary=pendingTx.summary;
+  addHist('発注メール','送信済み・在庫反映済み',`${summary.items}品目・合計${summary.cases}ケース・端数${summary.partials}`);
+  order.clear(); pendingTx=null; rebuildProducts(); renderCatalog(); updateCartBar();
+  planEl.classList.remove('show');
+  e.target.textContent='送信済み・在庫反映済み'; e.target.classList.add('sent'); e.target.disabled=true;
+  alert('送信済みとして記録し、発注分を在庫から差し引きました。');
+});
+
+if(!loadSavedInventory()){ renderCatalog(); updateStatus.textContent='ダミーデータで動作確認中'; updateStatus.className='update-status ok'; }
+</script>
+
+</body>
+</html>
