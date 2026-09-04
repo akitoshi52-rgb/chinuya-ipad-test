@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-<title>ちぬや発注アシスト Ver.7.3.1 Webテスト</title>
+<title>ちぬや発注アシスト Ver.7.3.2 Web</title>
 <style>
   :root{
     --paper:#FAF7F1;
@@ -340,11 +340,11 @@
 <body>
 
 <header class="top">
-  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3 · WEB TEST</div>
+  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3.2 · WEB</div>
   <h1>ちぬや発注アシスト</h1>
   <div class="sub">下へスクロールして商品を選び、最後に「選んだ商品を確認」でまとめて確認してから発注メールを作ります。管理日付が近い在庫から自動で割り当てます。</div>
   <div style="font-size:11.5px;color:var(--accent-deep);font-weight:700;margin-top:5px;">在庫を確認 → ケース・端数を入力 → 最後に担当者を選んでメール作成</div>
-  <div class="source-line" id="sourceLine">iPad Safari実機テスト用・ダミーデータ 3商品</div>
+  <div class="source-line" id="sourceLine">在庫未読込：元木様から届いた「わけあり」「ブロークン」Excelを2ファイル同時に選択してください</div>
   <button class="history-btn" id="historyBtn">やり取り履歴</button>
 </header>
 
@@ -436,9 +436,9 @@
 </div>
 
 <script>
-const DEFAULT_LOTS = [{"code": "TEST001", "name": "テスト用 コロッケ60", "spec": "65gx100/2", "kubun": "わけあり", "date": "2026-09-10", "warehouse": "テスト倉庫A", "stock": 5, "remainder": 1}, {"code": "TEST002", "name": "テスト用 白身フライ40", "spec": "40gx100/3", "kubun": "わけあり", "date": "2026-09-12", "warehouse": "テスト倉庫B", "stock": 3, "remainder": 2}, {"code": "TEST003", "name": "テスト用 メンチ", "spec": "600g(30個以上)x10/2", "kubun": "ブロークン", "date": "2026-09-15", "warehouse": "テストﾌﾞﾛｰｸﾝ倉庫", "stock": 4, "remainder": 1}];
+const DEFAULT_LOTS = [];
 
-let LOTS = DEFAULT_LOTS.map(x=>({...x}));
+let LOTS = [];
 let products = {};
 let productList = [];
 
@@ -793,7 +793,7 @@ restoreBtn.addEventListener('click',()=>{
   if(!confirm('この端末に保存されている在庫データをクリアしますか？')) return;
   try{localStorage.removeItem(INVENTORY_KEY);localStorage.removeItem(INVENTORY_META_KEY);}catch(e){}
   LOTS=[]; order.clear(); rebuildProducts(); renderCatalog(); updateCartBar(); planEl.classList.remove('show');
-  sourceLine.textContent='iPad Safari実機テスト用・ダミーデータ 3商品';
+  sourceLine.textContent='在庫未読込：元木様から届いた「わけあり」「ブロークン」Excelを2ファイル同時に選択してください';
   updateStatus.textContent='在庫をクリアしました。最新のExcel 2ファイルを読み込んでください。';
   updateStatus.className='update-status ok';
   addHist('在庫データ','クリア','端末内の在庫データをクリア');
@@ -1176,8 +1176,7 @@ function generateMail(){
   // メール本文はこの時点のselectedOperatorから毎回組み立てる。
   const operatorName = selectedOperator;
 
-  // 担当者に応じて署名を自動切替。安藤は代表者用の詳細署名、
-  // その他スタッフは会社共通情報＋登録した担当者名を使用する。
+  planBodyEl.innerHTML = bodyHtml;
   function buildSignature(name){
     const n=String(name||'').trim();
     if(n==='安藤' || n==='安藤彰敏' || n==='安藤 彰敏'){
@@ -1186,8 +1185,6 @@ function generateMail(){
     return `〒769-1101\n香川県三豊市詫間町詫間32\nハローランチかがわ\n有限会社三豊給食センター\n担当　${n}\nE-mail：hello.lunch.kagawa.3104@gmail.com`;
   }
   const signature = buildSignature(operatorName);
-
-  planBodyEl.innerHTML = bodyHtml;
   const mail = `元木様\n\nいつも大変お世話になっております。\n下記商品につきまして、購入を希望しております。\n同一商品に複数の在庫がある場合は、管理日付の近い在庫から記載しております。\n\n${productMailBlocks.join('\n\n')}\n\nお手数をおかけいたしますが、ご確認のほどよろしくお願いいたします。\n\n${signature}`;
   mailBodyEl.value = mail;
   mailOperatorDisplay.textContent = operatorName;
@@ -1252,7 +1249,11 @@ document.getElementById('markSentBtn').addEventListener('click',e=>{
   alert('送信済みとして記録し、発注分を在庫から差し引きました。');
 });
 
-if(!loadSavedInventory()){ renderCatalog(); updateStatus.textContent='ダミーデータで動作確認中'; updateStatus.className='update-status ok'; }
+if(!loadSavedInventory()){
+  renderCatalog();
+  updateStatus.textContent='在庫未読込です。最新の「わけあり」「ブロークン」Excelを2ファイル同時に選んでください。';
+  updateStatus.className='update-status warn';
+}
 </script>
 
 </body>
