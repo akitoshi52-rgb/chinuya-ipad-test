@@ -340,11 +340,11 @@
 <body>
 
 <header class="top">
-  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3.3 · WEB</div>
+  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3.4 · WEB</div>
   <h1>ちぬや発注アシスト</h1>
   <div class="sub">下へスクロールして商品を選び、最後に「選んだ商品を確認」でまとめて確認してから発注メールを作ります。管理日付が近い在庫から自動で割り当てます。</div>
   <div style="font-size:11.5px;color:var(--accent-deep);font-weight:700;margin-top:5px;">在庫を確認 → ケース・端数を入力 → 最後に担当者を選んでメール作成</div>
-  <div class="source-line" id="sourceLine">在庫未読込：元木様から届いた「わけあり」「ブロークン」Excelを2ファイル同時に選択してください</div>
+  <div class="source-line" id="sourceLine">在庫未読込：①「わけあり」→ ②「ブロークン」の順に、Excelを1ファイルずつ選んでください</div>
   <button class="history-btn" id="historyBtn">やり取り履歴</button>
 </header>
 
@@ -352,10 +352,12 @@
 
   <div class="controls">
     <div class="update-row">
-      <label class="update-btn" id="updateExcelLabel" for="excelFiles" role="button" tabindex="0">在庫Excelを更新</label>
+      <label class="update-btn" id="wakeExcelLabel" for="wakeExcelFile" role="button" tabindex="0">① わけありExcelを選ぶ</label>
+      <label class="update-btn" id="brokenExcelLabel" for="brokenExcelFile" role="button" tabindex="0">② ブロークンExcelを選ぶ</label>
       <button class="update-btn secondary" id="restoreDefaultBtn" type="button">在庫をクリア</button>
-      <input type="file" id="excelFiles" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">
-      <span class="update-status" id="updateStatus">わけあり・ブロークンのExcelを2ファイル同時に選択してください</span><span class="update-status" id="autoStatus">Web版：Excel手動更新</span>
+      <input type="file" id="wakeExcelFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">
+      <input type="file" id="brokenExcelFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">
+      <span class="update-status" id="updateStatus">①わけあり、②ブロークンを1ファイルずつ選んでください</span><span class="update-status" id="autoStatus">Web版：Excel手動更新</span>
     </div>
     <input type="text" id="searchInput" placeholder="商品名・商品コードで絞り込み（任意）" autocomplete="off">
     <div class="filter-row">
@@ -549,8 +551,11 @@ function perCasePieceText(spec){
 
 const INVENTORY_KEY='chinuya_inventory_lots_v63';
 const INVENTORY_META_KEY='chinuya_inventory_meta_v63';
-const excelInput=document.getElementById('excelFiles');
-const updateBtn=document.getElementById('updateExcelLabel');
+const wakeExcelInput=document.getElementById('wakeExcelFile');
+const brokenExcelInput=document.getElementById('brokenExcelFile');
+const wakeUpdateBtn=document.getElementById('wakeExcelLabel');
+const brokenUpdateBtn=document.getElementById('brokenExcelLabel');
+let pendingWake=null, pendingBroken=null;
 const restoreBtn=document.getElementById('restoreDefaultBtn');
 const updateStatus=document.getElementById('updateStatus');
 const sourceLine=document.getElementById('sourceLine');
@@ -747,53 +752,51 @@ function loadSavedInventory(){
   }catch(e){}
   return false;
 }
-updateBtn.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();excelInput.click();}});
-excelInput.addEventListener('change',async()=>{
-  const files=[...excelInput.files];
-  if(!files.length) return;
-  updateBtn.style.pointerEvents='none'; updateBtn.setAttribute('aria-disabled','true');
-  updateStatus.textContent='Excelを読み込んでいます…';
-  updateStatus.className='update-status';
+function setImportButtonsDisabled(disabled){
+  for(const b of [wakeUpdateBtn,brokenUpdateBtn]){
+    b.style.pointerEvents=disabled?'none':'';
+    if(disabled)b.setAttribute('aria-disabled','true'); else b.removeAttribute('aria-disabled');
+  }
+}
+for(const [btn,input] of [[wakeUpdateBtn,wakeExcelInput],[brokenUpdateBtn,brokenExcelInput]]){
+  btn.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();input.click();}});
+}
+function selectedImportStatus(){
+  const a=pendingWake?`わけあり：${pendingWake.name}`:'わけあり：未選択';
+  const b=pendingBroken?`ブロークン：${pendingBroken.name}`:'ブロークン：未選択';
+  return `${a} ／ ${b}`;
+}
+async function tryImportPair(){
+  if(!pendingWake || !pendingBroken){
+    updateStatus.textContent=`選択状況：${selectedImportStatus()}。続けてもう1種類を選んでください。`;
+    updateStatus.className='update-status'; return;
+  }
+  setImportButtonsDisabled(true); updateStatus.textContent='2つのExcelを読み込んでいます…'; updateStatus.className='update-status';
   try{
-    // 誤更新防止：毎回「わけあり」「ブロークン」の2ファイルを同時に選ぶ。
-    if(files.length!==2) throw new Error('在庫更新は「わけあり」と「ブロークン」の2ファイルを同時に選んでください。');
-    const names=files.map(f=>String(f.name||''));
-    const hasWake=names.some(n=>/わけあり/i.test(n));
-    const hasBroken=names.some(n=>/ブロークン|ﾌﾞﾛｰｸﾝ|broken/i.test(n));
-    if(!hasWake || !hasBroken) throw new Error('「わけあり」と「ブロークン」の2種類がそろっていません。元木様から届いた2ファイルを選んでください。');
-    if(new Set(names).size!==names.length) throw new Error('同じファイルが重複して選ばれています。');
+    const files=[pendingWake,pendingBroken], names=files.map(f=>String(f.name||''));
+    if(!/わけあり/i.test(names[0])) throw new Error('①には「わけあり」のExcelを選んでください。');
+    if(!/ブロークン|ﾌﾞﾛｰｸﾝ|broken/i.test(names[1])) throw new Error('②には「ブロークン」のExcelを選んでください。');
     const dateTags=names.map(n=>(n.match(/(\d{6})/)||[])[1]||'');
-    if(!dateTags[0] || !dateTags[1] || dateTags[0]!==dateTags[1]) throw new Error('2ファイルの日付が一致していません。同じ日に元木様から届いた「わけあり」「ブロークン」を選んでください。');
-
+    if(!dateTags[0] || !dateTags[1] || dateTags[0]!==dateTags[1]) throw new Error('2ファイルの日付が一致していません。同じ日に届いた2ファイルを選んでください。');
     let all=[];
-    for(const f of files){
-      const lots=await readXlsxFile(f);
-      if(!lots.length) throw new Error(`${f.name} から有効な在庫データを見つけられませんでした。`);
-      all=all.concat(lots);
-    }
-    if(!all.length) throw new Error('在庫データがありません。');
+    for(const f of files){const lots=await readXlsxFile(f); if(!lots.length) throw new Error(`${f.name} から有効な在庫データを見つけられませんでした。`); all=all.concat(lots);}
     const bad=all.find(l=>!l.code || !l.name || !Number.isInteger(Number(l.stock)) || Number(l.stock)<0 || !Number.isInteger(Number(l.remainder)) || Number(l.remainder)<0 || (Number(l.stock)<=0 && Number(l.remainder)<=0) || !isValidISODate(l.date) || !['わけあり','ブロークン'].includes(l.kubun));
     if(bad) throw new Error(`在庫データに不正な行があります（商品コード ${bad.code||'不明'}）。更新を中止しました。`);
     if(!all.some(l=>l.kubun==='わけあり') || !all.some(l=>l.kubun==='ブロークン')) throw new Error('区分判定結果に「わけあり」と「ブロークン」の両方がありません。更新を中止しました。');
-
-    const meta={updatedAt:new Date().toISOString(),files:files.map(f=>f.name)};
-    applyInventory(all,meta,true);
-    const total=all.reduce((s,x)=>s+x.stock,0);
-    const totalRem=all.reduce((s,x)=>s+(Number(x.remainder)||0),0);
-    addHist('在庫Excel更新','取込完了',`${files.map(f=>f.name).join(' / ')}\n${all.length}在庫行・${total}ケース・端数${totalRem}`);
-  }catch(err){
-    updateStatus.textContent='取込できません：'+(err?.message||err);
-    updateStatus.className='update-status err';
-  }finally{
-    updateBtn.style.pointerEvents=''; updateBtn.removeAttribute('aria-disabled');
-    excelInput.value='';
-  }
-});
+    const meta={updatedAt:new Date().toISOString(),files:names}; applyInventory(all,meta,true);
+    const total=all.reduce((s,x)=>s+x.stock,0), totalRem=all.reduce((s,x)=>s+(Number(x.remainder)||0),0);
+    addHist('在庫Excel更新','取込完了',`${names.join(' / ')}\n${all.length}在庫行・${total}ケース・端数${totalRem}`);
+    pendingWake=null; pendingBroken=null;
+  }catch(err){updateStatus.textContent='取込できません：'+(err?.message||err); updateStatus.className='update-status err';}
+  finally{setImportButtonsDisabled(false); wakeExcelInput.value=''; brokenExcelInput.value='';}
+}
+wakeExcelInput.addEventListener('change',async()=>{const f=wakeExcelInput.files&&wakeExcelInput.files[0];if(!f)return;pendingWake=f;await tryImportPair();});
+brokenExcelInput.addEventListener('change',async()=>{const f=brokenExcelInput.files&&brokenExcelInput.files[0];if(!f)return;pendingBroken=f;await tryImportPair();});
 restoreBtn.addEventListener('click',()=>{
   if(!confirm('この端末に保存されている在庫データをクリアしますか？')) return;
   try{localStorage.removeItem(INVENTORY_KEY);localStorage.removeItem(INVENTORY_META_KEY);}catch(e){}
   LOTS=[]; order.clear(); rebuildProducts(); renderCatalog(); updateCartBar(); planEl.classList.remove('show');
-  sourceLine.textContent='在庫未読込：元木様から届いた「わけあり」「ブロークン」Excelを2ファイル同時に選択してください';
+  sourceLine.textContent='在庫未読込：①「わけあり」→ ②「ブロークン」の順に、Excelを1ファイルずつ選んでください';
   updateStatus.textContent='在庫をクリアしました。最新のExcel 2ファイルを読み込んでください。';
   updateStatus.className='update-status ok';
   addHist('在庫データ','クリア','端末内の在庫データをクリア');
