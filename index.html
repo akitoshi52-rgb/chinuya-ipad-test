@@ -343,7 +343,7 @@
 <body>
 
 <header class="top">
-  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3.8 · WEB</div>
+  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3.9 · WEB</div>
   <h1>ちぬや発注アシスト</h1>
   <div class="sub">下へスクロールして商品を選び、最後に「選んだ商品を確認」でまとめて確認してから発注メールを作ります。管理日付が近い在庫から自動で割り当てます。</div>
   <div style="font-size:11.5px;color:var(--accent-deep);font-weight:700;margin-top:5px;">在庫を確認 → ケース・端数を入力 → 最後に担当者を選んでメール作成</div>
@@ -865,13 +865,23 @@ function loadOperators(){
   // 旧バージョン（Ver.6.5以前）の単一担当者名があれば引き継ぐ。なければ例として2名を初期登録。
   let seed=[];
   try{ const old=(localStorage.getItem(OP_KEY)||'').trim(); if(old) seed=[old]; }catch(e){}
-  if(!seed.length) seed=['山口','安藤'];
+  if(!seed.length) seed=['山口','安藤彰敏'];
   saveOperators(seed);
   return seed;
 }
 function saveOperators(arr){ try{localStorage.setItem(OPERATORS_KEY,JSON.stringify(arr));}catch(e){} }
 let operators=loadOperators();
+// Ver.7.3.9: 社内に同姓の担当者がいるため、旧登録の「安藤」は本人のフルネームへ移行。
+// 今後追加する同姓担当者も「＋ 新しい担当者」からフルネームで登録する。
+if(operators.includes('安藤')){
+  operators=operators.map(n=>n==='安藤'?'安藤彰敏':n).filter((n,i,a)=>a.indexOf(n)===i);
+  saveOperators(operators);
+}
 try{ selectedOperator=localStorage.getItem(OP_KEY+'_selected')||''; }catch(e){}
+if(selectedOperator==='安藤'){
+  selectedOperator='安藤彰敏';
+  try{localStorage.setItem(OP_KEY+'_selected',selectedOperator);}catch(e){}
+}
 if(!operators.includes(selectedOperator)) selectedOperator='';
 
 function renderOperatorChips(){
@@ -1207,15 +1217,10 @@ function generateMail(){
   const operatorName = selectedOperator;
 
   planBodyEl.innerHTML = bodyHtml;
-  function buildSignature(name){
-    const n=String(name||'').trim();
-    if(n==='安藤' || n==='安藤彰敏' || n==='安藤 彰敏'){
-      return `〒769-1101\n香川県三豊市詫間町詫間32\nハローランチかがわ\n有限会社三豊給食センター\n代表取締役　安藤彰敏\n090-3183-0246\nakitoshi52@gmail.com`;
-    }
-    return `〒769-1101\n香川県三豊市詫間町詫間32\nハローランチかがわ\n有限会社三豊給食センター\n担当　${n}\nE-mail：hello.lunch.kagawa.3104@gmail.com`;
-  }
-  const signature = buildSignature(operatorName);
-  const mail = `元木様\n\nいつも大変お世話になっております。\n下記商品につきまして、購入を希望しております。\n同一商品に複数の在庫がある場合は、管理日付の近い在庫から記載しております。\n\n${productMailBlocks.join('\n\n')}\n\nお手数をおかけいたしますが、ご確認のほどよろしくお願いいたします。\n\n${signature}`;
+  // Ver.7.3.9: 会社署名はOutlook側の自動署名に任せる。
+  // アシスト側は発注者の識別だけを1行入れ、署名の二重表示を防ぐ。
+  const operatorLine = `発注担当：${operatorName}`;
+  const mail = `元木様\n\nいつも大変お世話になっております。\n下記商品につきまして、購入を希望しております。\n同一商品に複数の在庫がある場合は、管理日付の近い在庫から記載しております。\n\n${productMailBlocks.join('\n\n')}\n\nお手数をおかけいたしますが、ご確認のほどよろしくお願いいたします。\n\n${operatorLine}`;
   mailBodyEl.value = mail;
   mailOperatorDisplay.textContent = operatorName;
   const subject='わけあり・ブロークン商品 購入希望のお願い';
