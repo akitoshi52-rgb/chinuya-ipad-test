@@ -343,7 +343,7 @@
 <body>
 
 <header class="top">
-  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3.7 · WEB</div>
+  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3.8 · WEB</div>
   <h1>ちぬや発注アシスト</h1>
   <div class="sub">下へスクロールして商品を選び、最後に「選んだ商品を確認」でまとめて確認してから発注メールを作ります。管理日付が近い在庫から自動で割り当てます。</div>
   <div style="font-size:11.5px;color:var(--accent-deep);font-weight:700;margin-top:5px;">在庫を確認 → ケース・端数を入力 → 最後に担当者を選んでメール作成</div>
@@ -581,9 +581,14 @@ function excelSerialToISO(v){
   return '';
 }
 function isValidISODate(s){
-  if(!/^20\d{2}-\d{2}-\d{2}$/.test(String(s||''))) return false;
-  const d=new Date(s+'T00:00:00');
-  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0,10)===s;
+  // UTCで検証する。iPad/Safari（日本時間）で local midnight を toISOString() すると
+  // 前日になり、正常な管理日付を不正と誤判定するため。
+  const text=String(s||'');
+  const m=text.match(/^(20\d{2})-(\d{2})-(\d{2})$/);
+  if(!m) return false;
+  const y=Number(m[1]), mo=Number(m[2]), d=Number(m[3]);
+  const dt=new Date(Date.UTC(y,mo-1,d));
+  return dt.getUTCFullYear()===y && dt.getUTCMonth()===mo-1 && dt.getUTCDate()===d;
 }
 function colLettersToIndex(ref){
   const m=String(ref).match(/^([A-Z]+)/i); if(!m) return 0;
