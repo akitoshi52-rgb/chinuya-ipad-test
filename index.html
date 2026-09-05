@@ -343,7 +343,7 @@
 <body>
 
 <header class="top">
-  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3.5 · WEB</div>
+  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3.6 · WEB</div>
   <h1>ちぬや発注アシスト</h1>
   <div class="sub">下へスクロールして商品を選び、最後に「選んだ商品を確認」でまとめて確認してから発注メールを作ります。管理日付が近い在庫から自動で割り当てます。</div>
   <div style="font-size:11.5px;color:var(--accent-deep);font-weight:700;margin-top:5px;">在庫を確認 → ケース・端数を入力 → 最後に担当者を選んでメール作成</div>
@@ -355,10 +355,11 @@
 
   <div class="controls">
     <div class="update-row">
-      <div class="file-pick-wrap"><span class="update-btn">① わけありExcelを選ぶ</span><input type="file" id="wakeExcelFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="わけありExcelを選ぶ"></div>
-      <div class="file-pick-wrap"><span class="update-btn">② ブロークンExcelを選ぶ</span><input type="file" id="brokenExcelFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="ブロークンExcelを選ぶ"></div>
+      <button class="update-btn" id="wakeExcelLabel" type="button">① わけありExcelを選ぶ</button>
+      <button class="update-btn" id="brokenExcelLabel" type="button">② ブロークンExcelを選ぶ</button>
+      <input type="file" id="sharedExcelFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none" aria-label="在庫Excelを選ぶ">
       <button class="update-btn secondary" id="restoreDefaultBtn" type="button">在庫をクリア</button>
-      <span class="update-status" id="updateStatus">①わけあり、②ブロークンを1ファイルずつ選んでください</span><span class="update-status" id="autoStatus">Web版：Excel手動更新</span>
+      <span class="update-status" id="updateStatus">①わけあり、②ブロークンを順番に1ファイルずつ選んでください</span><span class="update-status" id="autoStatus">Web版：Excel手動更新</span>
     </div>
     <input type="text" id="searchInput" placeholder="商品名・商品コードで絞り込み（任意）" autocomplete="off">
     <div class="filter-row">
@@ -552,10 +553,10 @@ function perCasePieceText(spec){
 
 const INVENTORY_KEY='chinuya_inventory_lots_v63';
 const INVENTORY_META_KEY='chinuya_inventory_meta_v63';
-const wakeExcelInput=document.getElementById('wakeExcelFile');
-const brokenExcelInput=document.getElementById('brokenExcelFile');
+const sharedExcelInput=document.getElementById('sharedExcelFile');
 const wakeUpdateBtn=document.getElementById('wakeExcelLabel');
 const brokenUpdateBtn=document.getElementById('brokenExcelLabel');
+let importTarget=null;
 let pendingWake=null, pendingBroken=null;
 const restoreBtn=document.getElementById('restoreDefaultBtn');
 const updateStatus=document.getElementById('updateStatus');
@@ -759,9 +760,14 @@ function setImportButtonsDisabled(disabled){
     if(disabled)b.setAttribute('aria-disabled','true'); else b.removeAttribute('aria-disabled');
   }
 }
-for(const [btn,input] of [[wakeUpdateBtn,wakeExcelInput],[brokenUpdateBtn,brokenExcelInput]]){
-  btn.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();input.click();}});
+function openExcelPicker(target){
+  importTarget=target;
+  sharedExcelInput.value='';
+  // Must be called directly from the user's tap for iPad Safari.
+  sharedExcelInput.click();
 }
+wakeUpdateBtn.addEventListener('click',()=>openExcelPicker('wake'));
+brokenUpdateBtn.addEventListener('click',()=>openExcelPicker('broken'));
 function selectedImportStatus(){
   const a=pendingWake?`わけあり：${pendingWake.name}`:'わけあり：未選択';
   const b=pendingBroken?`ブロークン：${pendingBroken.name}`:'ブロークン：未選択';
@@ -789,10 +795,17 @@ async function tryImportPair(){
     addHist('在庫Excel更新','取込完了',`${names.join(' / ')}\n${all.length}在庫行・${total}ケース・端数${totalRem}`);
     pendingWake=null; pendingBroken=null;
   }catch(err){updateStatus.textContent='取込できません：'+(err?.message||err); updateStatus.className='update-status err';}
-  finally{setImportButtonsDisabled(false); wakeExcelInput.value=''; brokenExcelInput.value='';}
+  finally{setImportButtonsDisabled(false); sharedExcelInput.value='';}
 }
-wakeExcelInput.addEventListener('change',async()=>{const f=wakeExcelInput.files&&wakeExcelInput.files[0];if(!f)return;pendingWake=f;await tryImportPair();});
-brokenExcelInput.addEventListener('change',async()=>{const f=brokenExcelInput.files&&brokenExcelInput.files[0];if(!f)return;pendingBroken=f;await tryImportPair();});
+sharedExcelInput.addEventListener('change',async()=>{
+  const f=sharedExcelInput.files&&sharedExcelInput.files[0];
+  if(!f){ importTarget=null; return; }
+  if(importTarget==='wake') pendingWake=f;
+  else if(importTarget==='broken') pendingBroken=f;
+  else { updateStatus.textContent='取込できません：選択先を判定できませんでした。もう一度ボタンから選んでください。'; updateStatus.className='update-status err'; return; }
+  importTarget=null;
+  await tryImportPair();
+});
 restoreBtn.addEventListener('click',()=>{
   if(!confirm('この端末に保存されている在庫データをクリアしますか？')) return;
   try{localStorage.removeItem(INVENTORY_KEY);localStorage.removeItem(INVENTORY_META_KEY);}catch(e){}
