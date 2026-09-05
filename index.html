@@ -343,7 +343,7 @@
 <body>
 
 <header class="top">
-  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3.6 · WEB</div>
+  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3.7 · WEB</div>
   <h1>ちぬや発注アシスト</h1>
   <div class="sub">下へスクロールして商品を選び、最後に「選んだ商品を確認」でまとめて確認してから発注メールを作ります。管理日付が近い在庫から自動で割り当てます。</div>
   <div style="font-size:11.5px;color:var(--accent-deep);font-weight:700;margin-top:5px;">在庫を確認 → ケース・端数を入力 → 最後に担当者を選んでメール作成</div>
@@ -709,12 +709,15 @@ function rowsToLots(rows, filename){
   }
   return out;
 }
-async function readXlsxFile(file){
+async function readXlsxFile(file, forcedKubun){
   const zip=await unzipXlsx(await file.arrayBuffer());
   const shared=parseSharedStrings(zip);
   const sheetNames=Object.keys(zip).filter(k=>/^xl\/worksheets\/sheet\d+\.xml$/i.test(k)).sort();
   let lots=[];
-  for(const s of sheetNames) lots=lots.concat(rowsToLots(parseSheetRows(zip[s],shared),file.name));
+  // iPad SafariではFile.nameの日本語名が安定しない場合があるため、
+  // 押したボタン側の区分を優先して判定する。
+  const nameForKubun = forcedKubun==='ブロークン' ? 'ブロークン.xlsx' : forcedKubun==='わけあり' ? 'わけあり.xlsx' : file.name;
+  for(const s of sheetNames) lots=lots.concat(rowsToLots(parseSheetRows(zip[s],shared),nameForKubun));
   return lots;
 }
 function applyInventory(lots, meta, save=true){
@@ -781,12 +784,17 @@ async function tryImportPair(){
   setImportButtonsDisabled(true); updateStatus.textContent='2つのExcelを読み込んでいます…'; updateStatus.className='update-status';
   try{
     const files=[pendingWake,pendingBroken], names=files.map(f=>String(f.name||''));
-    if(!/わけあり/i.test(names[0])) throw new Error('①には「わけあり」のExcelを選んでください。');
-    if(!/ブロークン|ﾌﾞﾛｰｸﾝ|broken/i.test(names[1])) throw new Error('②には「ブロークン」のExcelを選んでください。');
+    // iPad SafariではFile.nameの日本語部分が正しく渡らないことがあるため、
+    // ファイル名による「わけあり／ブロークン」判定は行わない。
+    // ①で選んだファイルをわけあり、②で選んだファイルをブロークンとして読む。
     const dateTags=names.map(n=>(n.match(/(\d{6})/)||[])[1]||'');
-    if(!dateTags[0] || !dateTags[1] || dateTags[0]!==dateTags[1]) throw new Error('2ファイルの日付が一致していません。同じ日に届いた2ファイルを選んでください。');
+    if(dateTags[0] && dateTags[1] && dateTags[0]!==dateTags[1]) throw new Error('2ファイルの日付が一致していません。同じ日に届いた2ファイルを選んでください。');
     let all=[];
-    for(const f of files){const lots=await readXlsxFile(f); if(!lots.length) throw new Error(`${f.name} から有効な在庫データを見つけられませんでした。`); all=all.concat(lots);}
+    const wakeLots=await readXlsxFile(files[0],'わけあり');
+    if(!wakeLots.length) throw new Error('①で選んだExcelから有効な在庫データを見つけられませんでした。');
+    const brokenLots=await readXlsxFile(files[1],'ブロークン');
+    if(!brokenLots.length) throw new Error('②で選んだExcelから有効な在庫データを見つけられませんでした。');
+    all=wakeLots.concat(brokenLots);
     const bad=all.find(l=>!l.code || !l.name || !Number.isInteger(Number(l.stock)) || Number(l.stock)<0 || !Number.isInteger(Number(l.remainder)) || Number(l.remainder)<0 || (Number(l.stock)<=0 && Number(l.remainder)<=0) || !isValidISODate(l.date) || !['わけあり','ブロークン'].includes(l.kubun));
     if(bad) throw new Error(`在庫データに不正な行があります（商品コード ${bad.code||'不明'}）。更新を中止しました。`);
     if(!all.some(l=>l.kubun==='わけあり') || !all.some(l=>l.kubun==='ブロークン')) throw new Error('区分判定結果に「わけあり」と「ブロークン」の両方がありません。更新を中止しました。');
@@ -1268,7 +1276,7 @@ document.getElementById('markSentBtn').addEventListener('click',e=>{
 
 if(!loadSavedInventory()){
   renderCatalog();
-  updateStatus.textContent='在庫未読込です。最新の「わけあり」「ブロークン」Excelを2ファイル同時に選んでください。';
+  updateStatus.textContent='在庫未読込です。①わけあり、②ブロークンの順に1ファイルずつ選んでください。';
   updateStatus.className='update-status warn';
 }
 </script>
