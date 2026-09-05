@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-<title>ちぬや発注アシスト Ver.7.3.2 Web</title>
+<title>ちぬや発注アシスト Ver.7.3.3 Web</title>
 <style>
   :root{
     --paper:#FAF7F1;
@@ -340,7 +340,7 @@
 <body>
 
 <header class="top">
-  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3.2 · WEB</div>
+  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3.3 · WEB</div>
   <h1>ちぬや発注アシスト</h1>
   <div class="sub">下へスクロールして商品を選び、最後に「選んだ商品を確認」でまとめて確認してから発注メールを作ります。管理日付が近い在庫から自動で割り当てます。</div>
   <div style="font-size:11.5px;color:var(--accent-deep);font-weight:700;margin-top:5px;">在庫を確認 → ケース・端数を入力 → 最後に担当者を選んでメール作成</div>
@@ -352,9 +352,9 @@
 
   <div class="controls">
     <div class="update-row">
-      <button class="update-btn" id="updateExcelBtn" type="button">在庫Excelを更新</button>
+      <label class="update-btn" id="updateExcelLabel" for="excelFiles" role="button" tabindex="0">在庫Excelを更新</label>
       <button class="update-btn secondary" id="restoreDefaultBtn" type="button">在庫をクリア</button>
-      <input type="file" id="excelFiles" accept=".xlsx" multiple hidden>
+      <input type="file" id="excelFiles" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">
       <span class="update-status" id="updateStatus">わけあり・ブロークンのExcelを2ファイル同時に選択してください</span><span class="update-status" id="autoStatus">Web版：Excel手動更新</span>
     </div>
     <input type="text" id="searchInput" placeholder="商品名・商品コードで絞り込み（任意）" autocomplete="off">
@@ -550,7 +550,7 @@ function perCasePieceText(spec){
 const INVENTORY_KEY='chinuya_inventory_lots_v63';
 const INVENTORY_META_KEY='chinuya_inventory_meta_v63';
 const excelInput=document.getElementById('excelFiles');
-const updateBtn=document.getElementById('updateExcelBtn');
+const updateBtn=document.getElementById('updateExcelLabel');
 const restoreBtn=document.getElementById('restoreDefaultBtn');
 const updateStatus=document.getElementById('updateStatus');
 const sourceLine=document.getElementById('sourceLine');
@@ -747,11 +747,11 @@ function loadSavedInventory(){
   }catch(e){}
   return false;
 }
-updateBtn.addEventListener('click',()=>excelInput.click());
+updateBtn.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();excelInput.click();}});
 excelInput.addEventListener('change',async()=>{
   const files=[...excelInput.files];
   if(!files.length) return;
-  updateBtn.disabled=true;
+  updateBtn.style.pointerEvents='none'; updateBtn.setAttribute('aria-disabled','true');
   updateStatus.textContent='Excelを読み込んでいます…';
   updateStatus.className='update-status';
   try{
@@ -785,7 +785,7 @@ excelInput.addEventListener('change',async()=>{
     updateStatus.textContent='取込できません：'+(err?.message||err);
     updateStatus.className='update-status err';
   }finally{
-    updateBtn.disabled=false;
+    updateBtn.style.pointerEvents=''; updateBtn.removeAttribute('aria-disabled');
     excelInput.value='';
   }
 });
