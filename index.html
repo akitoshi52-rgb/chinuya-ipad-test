@@ -255,6 +255,9 @@
     cursor:pointer; font-family:inherit;
   }
   .update-btn.secondary{background:var(--surface);color:var(--accent-deep);}
+  .file-pick-wrap{position:relative;display:inline-block;}
+  .file-pick-wrap .update-btn{display:inline-flex;align-items:center;justify-content:center;}
+  .file-pick-wrap input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:3;font-size:16px;}
   .update-status{font-size:11.5px;color:var(--ink-soft);line-height:1.4;}
   .update-status.ok{color:var(--accent-deep);font-weight:700;}
   .update-status.err{color:var(--danger);font-weight:700;}
@@ -340,7 +343,7 @@
 <body>
 
 <header class="top">
-  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3.4 · WEB</div>
+  <div class="eyebrow">CHINUYA · FEFO ORDER · VER.7.3.5 · WEB</div>
   <h1>ちぬや発注アシスト</h1>
   <div class="sub">下へスクロールして商品を選び、最後に「選んだ商品を確認」でまとめて確認してから発注メールを作ります。管理日付が近い在庫から自動で割り当てます。</div>
   <div style="font-size:11.5px;color:var(--accent-deep);font-weight:700;margin-top:5px;">在庫を確認 → ケース・端数を入力 → 最後に担当者を選んでメール作成</div>
@@ -352,11 +355,9 @@
 
   <div class="controls">
     <div class="update-row">
-      <label class="update-btn" id="wakeExcelLabel" for="wakeExcelFile" role="button" tabindex="0">① わけありExcelを選ぶ</label>
-      <label class="update-btn" id="brokenExcelLabel" for="brokenExcelFile" role="button" tabindex="0">② ブロークンExcelを選ぶ</label>
+      <div class="file-pick-wrap"><span class="update-btn">① わけありExcelを選ぶ</span><input type="file" id="wakeExcelFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="わけありExcelを選ぶ"></div>
+      <div class="file-pick-wrap"><span class="update-btn">② ブロークンExcelを選ぶ</span><input type="file" id="brokenExcelFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="ブロークンExcelを選ぶ"></div>
       <button class="update-btn secondary" id="restoreDefaultBtn" type="button">在庫をクリア</button>
-      <input type="file" id="wakeExcelFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">
-      <input type="file" id="brokenExcelFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">
       <span class="update-status" id="updateStatus">①わけあり、②ブロークンを1ファイルずつ選んでください</span><span class="update-status" id="autoStatus">Web版：Excel手動更新</span>
     </div>
     <input type="text" id="searchInput" placeholder="商品名・商品コードで絞り込み（任意）" autocomplete="off">
